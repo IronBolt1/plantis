@@ -242,9 +242,9 @@ textarea{height:76px;resize:none}
 
 <script>
 // ─── CONFIG – trage deine Keys hier ein ──────────────────────────────────────
-const PLANT_ID_KEY    = 'gQQkYlXxlpSYuswh5sd9yiTW0s1wzoDE89T2fDA6FkKzHClPe6';         // plant.id API Key
-const VAPID_PUBLIC    = 'BDUtBSKOE4XTGtsmFAItvWrHjgScaBPsQK_3qnG29DZcdSEjPR8ep6wU12N2dqRzNxO7X_WQUwbyAKIWCHembkk';     // von vapidkeys.com
-const WORKER_URL      = 'https://plantis-push.vorkochen.workers.dev'; // z.B. https://plantis-push.deinname.workers.dev
+const PLANT_ID_KEY    = 'DEIN_PLANT_ID_KEY_HIER';         // plant.id API Key
+const VAPID_PUBLIC    = 'DEIN_VAPID_PUBLIC_KEY_HIER';     // von vapidkeys.com
+const WORKER_URL      = 'DEINE_CLOUDFLARE_WORKER_URL_HIER'; // z.B. https://plantis-push.deinname.workers.dev
 const FB              = 'https://plantis-5934a-default-rtdb.europe-west1.firebasedatabase.app';
 const PATH            = '/pflanzen';
 
@@ -313,39 +313,42 @@ function compressPhoto(file, maxPx = 800, quality = 0.75) {
 
 // ─── Plant.id API ─────────────────────────────────────────────────────────────
 async function identifyPlant(base64img) {
-  // Strip data URL prefix
-  const imageData = base64img.split(',')[1];
-  const res = await fetch('https://api.plant.id/v3/identification', {
+  const imageData = base64img.includes(',') ? base64img.split(',')[1] : base64img;
+  const res = await fetch('https://plant.id/api/v3/identification?details=common_names,watering,sunlight,best_watering,best_light_condition,description&language=de', {
     method: 'POST',
     headers: {
       'Api-Key': PLANT_ID_KEY,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      images: [imageData],
-      similar_images: false,
-      plant_details: ['common_names','watering','sunlight','best_watering','best_light_condition','description']
+      images: ['data:image/jpeg;base64,' + imageData],
+      similar_images: false
     })
   });
-  if (!res.ok) throw new Error('Plant.id Fehler: ' + res.status);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error('Plant.id Fehler: ' + res.status + (errText ? ' – ' + errText.slice(0,80) : ''));
+  }
   return res.json();
 }
 
 async function checkDisease(base64img) {
-  const imageData = base64img.split(',')[1];
-  const res = await fetch('https://api.plant.id/v3/health_assessment', {
+  const imageData = base64img.includes(',') ? base64img.split(',')[1] : base64img;
+  const res = await fetch('https://plant.id/api/v3/health_assessment?details=local_name,description,treatment,classification&language=de', {
     method: 'POST',
     headers: {
       'Api-Key': PLANT_ID_KEY,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      images: [imageData],
-      similar_images: false,
-      disease_details: ['description','treatment']
+      images: ['data:image/jpeg;base64,' + imageData],
+      similar_images: false
     })
   });
-  if (!res.ok) throw new Error('Plant.id Fehler: ' + res.status);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error('Plant.id Fehler: ' + res.status + (errText ? ' – ' + errText.slice(0,80) : ''));
+  }
   return res.json();
 }
 
@@ -353,19 +356,26 @@ function showAiIdentifyResult(data) {
   const box = document.getElementById('ai-identify-result');
   const diseaseBox = document.getElementById('ai-disease-result');
 
-  if (!data?.result?.classification?.suggestions?.length) {
+  // v3 API: result.classification.suggestions or result.suggestions
+  const suggestions = data?.result?.classification?.suggestions
+    || data?.suggestions
+    || [];
+
+  if (!suggestions.length) {
     box.innerHTML = '<div class="ai-result-title">❓ Pflanze nicht erkannt</div>';
     box.classList.add('show');
     return;
   }
 
-  const top = data.result.classification.suggestions[0];
+  const top = suggestions[0];
   const name = top.name || '';
-  const common = top.details?.common_names?.[0] || '';
-  const desc = top.details?.description?.value || '';
-  const watering = top.details?.best_watering || top.details?.watering?.max || '';
-  const light = top.details?.best_light_condition || top.details?.sunlight?.[0] || '';
-  const prob = Math.round((top.probability || 0) * 100);
+  const common = top.details?.common_names?.[0] || top.plant_name || '';
+  const desc = top.details?.description?.value || top.details?.description || '';
+  const watering = top.details?.best_watering || top.details?.watering?.max
+    || top.details?.watering || '';
+  const light = top.details?.best_light_condition || top.details?.sunlight?.[0]
+    || top.details?.sunlight || '';
+  const prob = Math.round((top.probability || top.score || 0) * 100);
 
   // Try to map watering text to interval days
   let suggestedDays = 7;
@@ -393,11 +403,14 @@ function showAiIdentifyResult(data) {
   // Check for disease at the same time
   if (pendingPhoto) {
     checkDisease(pendingPhoto).then(dr => {
-      const isHealthy = dr?.result?.is_healthy?.binary;
+      const isHealthy = dr?.result?.is_healthy?.binary ?? dr?.health_assessment?.is_healthy;
       if (isHealthy === false) {
-        const dis = dr?.result?.disease?.suggestions?.[0];
-        const disName = dis?.name || 'Unbekannte Krankheit';
-        const treatment = dis?.details?.treatment?.biological?.[0] || dis?.details?.treatment?.chemical?.[0] || '';
+        const dis = dr?.result?.disease?.suggestions?.[0]
+          || dr?.health_assessment?.diseases?.[0];
+        const disName = dis?.name || dis?.disease_details?.local_name || 'Unbekannte Krankheit';
+        const treatment = dis?.details?.treatment?.biological?.[0]
+          || dis?.details?.treatment?.chemical?.[0]
+          || dis?.disease_details?.treatment?.biological?.[0] || '';
         diseaseBox.innerHTML = `
           <div class="ai-result-title">⚠️ Mögliches Problem erkannt: ${disName}</div>
           ${treatment ? `<div class="ai-result-row"><span>Behandlung</span><span>${treatment}</span></div>` : ''}
@@ -459,25 +472,34 @@ async function handleScanPhoto(e) {
     ]);
     let html = '';
     // Identity
-    const top = idData?.result?.classification?.suggestions?.[0];
+    const top = idData?.result?.classification?.suggestions?.[0]
+      || idData?.suggestions?.[0];
     if (top) {
-      const prob = Math.round((top.probability||0)*100);
+      const prob = Math.round((top.probability||top.score||0)*100);
+      const common = top.details?.common_names?.[0] || top.plant_name || top.name;
+      const watering = top.details?.best_watering || top.details?.watering?.max || top.details?.watering || '';
+      const light = top.details?.best_light_condition || top.details?.sunlight?.[0] || top.details?.sunlight || '';
       html += `<div class="ai-result show" style="margin-bottom:8px">
-        <div class="ai-result-title">🌿 ${top.details?.common_names?.[0] || top.name} · ${prob}%</div>
-        ${top.details?.best_watering ? `<div class="ai-result-row"><span>💧 Giessen</span><span>${top.details.best_watering}</span></div>` : ''}
-        ${top.details?.best_light_condition ? `<div class="ai-result-row"><span>☀️ Licht</span><span>${top.details.best_light_condition}</span></div>` : ''}
+        <div class="ai-result-title">🌿 ${common} · ${prob}%</div>
+        ${watering ? `<div class="ai-result-row"><span>💧 Giessen</span><span>${watering}</span></div>` : ''}
+        ${light ? `<div class="ai-result-row"><span>☀️ Licht</span><span>${light}</span></div>` : ''}
       </div>`;
     }
     // Health
-    const isHealthy = healthData?.result?.is_healthy?.binary;
+    const isHealthy = healthData?.result?.is_healthy?.binary
+      ?? healthData?.health_assessment?.is_healthy;
     if (isHealthy === false) {
-      const dis = healthData?.result?.disease?.suggestions?.[0];
-      const disName = dis?.name || 'Problem erkannt';
-      const treatment = dis?.details?.treatment?.biological?.[0] || dis?.details?.treatment?.chemical?.[0] || '';
+      const dis = healthData?.result?.disease?.suggestions?.[0]
+        || healthData?.health_assessment?.diseases?.[0];
+      const disName = dis?.name || dis?.disease_details?.local_name || 'Problem erkannt';
+      const treatment = dis?.details?.treatment?.biological?.[0]
+        || dis?.details?.treatment?.chemical?.[0]
+        || dis?.disease_details?.treatment?.biological?.[0] || '';
+      const descText = dis?.details?.description?.value || dis?.disease_details?.description || '';
       html += `<div class="ai-result ai-disease show">
         <div class="ai-result-title">⚠️ ${disName}</div>
         ${treatment ? `<div class="ai-result-row"><span>Behandlung</span><span>${treatment}</span></div>` : ''}
-        ${dis?.details?.description?.value ? `<div class="ai-result-row" style="flex-direction:column"><span>Info</span><span style="color:#555;margin-top:2px">${dis.details.description.value.slice(0,150)}…</span></div>` : ''}
+        ${descText ? `<div class="ai-result-row" style="flex-direction:column"><span>Info</span><span style="color:#555;margin-top:2px">${descText.slice(0,150)}…</span></div>` : ''}
       </div>`;
     } else if (isHealthy === true) {
       html += `<div class="ai-result show"><div class="ai-result-title">✅ Pflanze sieht gesund aus</div></div>`;
