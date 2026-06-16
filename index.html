@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Plantis">
+<title>Plantis</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#F7F5F0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1A2E1C}
+.app{max-width:430px;margin:0 auto;min-height:100vh;background:#F7F5F0;padding-bottom:100px}
+
+/* topbar */
+.topbar{background:#2C3E2D;padding:env(safe-area-inset-top,14px) 20px 14px;padding-top:calc(env(safe-area-inset-top,0px) + 14px)}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between}
+.topbar h1{font-size:21px;font-weight:600;color:#E8F0E9;letter-spacing:-.4px}
+.topbar p{font-size:12px;color:#7A9B7C;margin-top:2px}
+.add-btn{width:38px;height:38px;border-radius:50%;background:#4A7C59;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;flex-shrink:0;line-height:1}
+.add-btn:active{background:#3a6347}
+
+/* toast */
+.toast{position:relative;margin:10px 12px 0;background:#2C3E2D;color:#E8F0E9;border-radius:10px;padding:11px 16px;font-size:13px;font-weight:500;text-align:center;display:none}
+.toast.show{display:block}
+
+/* urgent banner */
+.urgent{background:#FFF3E0;border-bottom:1px solid #FFD9A0;padding:10px 20px;display:none;align-items:center;gap:8px;font-size:13px;color:#7A4F00}
+.urgent.show{display:flex}
+
+/* section label */
+.sec-label{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#8A9B8E;padding:16px 20px 8px}
+
+/* plant card */
+.pcard{background:#fff;border-radius:16px;margin:0 12px 10px;overflow:hidden;border:.5px solid #E0EAE0}
+.pcard-inner{display:flex;min-height:90px}
+.pthumb{width:90px;flex-shrink:0;background:#D4E8D4;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.pthumb img{width:100%;height:100%;object-fit:cover}
+.pthumb-icon{font-size:38px}
+.sbar{position:absolute;bottom:0;left:0;right:0;height:5px}
+.s-ok{background:#4A7C59}.s-soon{background:#E07A00}.s-now{background:#C0392B}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.s-now{animation:pulse 1.4s infinite}
+.pbody{flex:1;padding:13px 13px 11px;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+.ptop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.pname{font-size:15px;font-weight:600;color:#1A2E1C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ploc{font-size:12px;color:#8A9B8E;margin-top:2px}
+.wchip{flex-shrink:0;font-size:11px;font-weight:600;padding:3px 9px;border-radius:12px;white-space:nowrap}
+.c-ok{background:#E8F5E9;color:#1B5E20}
+.c-soon{background:#FFF3E0;color:#7A4F00}
+.c-now{background:#FFEBEE;color:#B71C1C}
+.pbot{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.plast{font-size:12px;color:#8A9B8E}
+.pactions{display:flex;gap:6px}
+.ibtn{width:34px;height:34px;border-radius:9px;border:.5px solid #E0EAE0;background:#F5F8F5;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
+.ibtn:active{background:#dceadc}
+.ibtn-water{background:#4A7C59;border-color:#4A7C59;font-size:18px}
+.ibtn-water:active{background:#3a6347}
+.ai-box{padding:12px 14px;background:#F0F7F0;border-top:.5px solid #D4E8D4;font-size:13px;color:#1B4D25;line-height:1.65}
+.ai-box.loading{color:#8A9B8E;font-style:italic}
+
+/* empty */
+.empty{text-align:center;padding:64px 24px}
+.empty-icon{font-size:56px;margin-bottom:16px}
+.empty h2{font-size:18px;font-weight:600;color:#3A4E3C;margin-bottom:8px}
+.empty p{font-size:14px;color:#8A9B8E;line-height:1.6}
+
+/* modal */
+.mwrap{display:none;position:fixed;inset:0;z-index:100}
+.mwrap.open{display:block}
+.mback{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.msheet{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-radius:20px 20px 0 0;padding:0 0 env(safe-area-inset-bottom,24px);max-height:92vh;overflow-y:auto}
+.mhandle{width:36px;height:4px;background:#D4D4D4;border-radius:2px;margin:12px auto 0}
+.mhead{padding:14px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.mhead h3{font-size:17px;font-weight:600;color:#1A2E1C}
+.mclose{width:32px;height:32px;border-radius:50%;background:#F0F0F0;border:none;cursor:pointer;font-size:20px;color:#555;display:flex;align-items:center;justify-content:center;line-height:1}
+.mbody{padding:16px 20px}
+.flabel{font-size:13px;font-weight:600;color:#4A6E4C;margin:14px 0 6px}
+.flabel:first-child{margin-top:0}
+input[type=text],input[type=date],input[type=number],textarea{width:100%;padding:11px 13px;border:1.5px solid #E0EAE0;border-radius:11px;font-size:15px;color:#1A2E1C;background:#FAFCFA;font-family:inherit;outline:none;-webkit-appearance:none}
+input:focus,textarea:focus{border-color:#4A7C59;background:#fff}
+textarea{height:76px;resize:none}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.photo-zone{width:100%;height:110px;border:2px dashed #C0D4C0;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;cursor:pointer;background:#F5FAF5;position:relative;color:#7A9B7C;font-size:13px;font-weight:500}
+.photo-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.photo-prev{width:100%;height:110px;border-radius:11px;object-fit:cover;border:1.5px solid #E0EAE0;cursor:pointer;display:block}
+.mfoot{padding:12px 20px 4px;display:flex;gap:10px}
+.btn-save{flex:1;padding:14px;background:#2C3E2D;color:#E8F0E9;border:none;border-radius:13px;font-size:16px;font-weight:600;cursor:pointer}
+.btn-save:active{background:#1a2e1c}
+.btn-cancel{padding:14px 18px;background:#F0F0F0;color:#666;border:none;border-radius:13px;font-size:16px;cursor:pointer}
+
+/* loading */
+.loading-screen{display:flex;align-items:center;justify-content:center;height:200px;color:#8A9B8E;font-size:15px;gap:10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <h1>🌿 Plantis</h1>
+        <p id="status-line">Verbinde…</p>
+      </div>
+      <button class="add-btn" onclick="openModal()" aria-label="Pflanze hinzufügen">+</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="urgent" class="urgent">⚠️ <span id="urgent-text"></span></div>
+  <div id="list-area"><div class="loading-screen">⏳ Lädt…</div></div>
+</div>
+
+<!-- modal -->
+<div class="mwrap" id="mwrap">
+  <div class="mback" onclick="closeModal()"></div>
+  <div class="msheet">
+    <div class="mhandle"></div>
+    <div class="mhead">
+      <h3 id="mtitle">Neue Pflanze</h3>
+      <button class="mclose" onclick="closeModal()">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="flabel">Name *</div>
+      <input type="text" id="f-name" placeholder="z.B. Monstera, Basilikum…">
+      <div class="row2">
+        <div>
+          <div class="flabel">Standort</div>
+          <input type="text" id="f-loc" placeholder="Wohnzimmer…">
+        </div>
+        <div>
+          <div class="flabel">Giess-Intervall (Tage)</div>
+          <input type="number" id="f-int" value="7" min="1" max="90">
+        </div>
+      </div>
+      <div class="flabel">Zuletzt gegossen</div>
+      <input type="date" id="f-watered">
+      <div class="flabel">Notizen</div>
+      <textarea id="f-notes" placeholder="Besonderheiten, Dünger, Tipps…"></textarea>
+      <div class="flabel">Foto (für KI-Analyse)</div>
+      <div id="photo-area">
+        <div class="photo-zone">
+          <span style="font-size:26px">📷</span>
+          <span>Foto vom iPhone hinzufügen</span>
+          <input type="file" accept="image/*" onchange="handlePhoto(event)">
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn-cancel" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-save" onclick="savePlant()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const FB = 'https://plantis-5934a-default-rtdb.europe-west1.firebasedatabase.app';
+const PATH = '/pflanzen';
+let plants = [];
+let editId = null;
+let pendingPhoto = null;
+
+function days(d) {
+  if (!d) return 999;
+  return Math.floor((Date.now() - new Date(d)) / 86400000);
+}
+
+function statusOf(p) {
+  const d = days(p.watered), iv = p.interval || 7;
+  if (d >= iv)        return {bar:'s-now',  chip:'c-now',  label:'Jetzt giessen!'};
+  if (d >= iv * 0.7)  return {bar:'s-soon', chip:'c-soon', label:'Bald giessen'};
+  return                     {bar:'s-ok',   chip:'c-ok',   label:'Gut versorgt'};
+}
+
+function wateredText(d) {
+  const n = days(d);
+  if (n === 0) return 'Heute gegossen';
+  if (n === 1) return 'Gestern gegossen';
+  if (n >= 999) return 'Noch nie gegossen';
+  return 'Vor ' + n + ' Tagen';
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+async function fbGet() {
+  const r = await fetch(FB + PATH + '.json');
+  const d = await r.json();
+  if (!d) return [];
+  return Object.entries(d).map(([fbid, v]) => ({...v, fbid}));
+}
+
+async function fbSet(plant) {
+  if (plant.fbid) {
+    const {fbid, ...data} = plant;
+    await fetch(FB + PATH + '/' + fbid + '.json', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+  } else {
+    const r = await fetch(FB + PATH + '.json', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(plant)
+    });
+    const d = await r.json();
+    plant.fbid = d.name;
+  }
+}
+
+async function fbDel(fbid) {
+  await fetch(FB + PATH + '/' + fbid + '.json', {method:'DELETE'});
+}
+
+async function load() {
+  try {
+    plants = await fbGet();
+    render();
+    document.getElementById('status-line').textContent =
+      plants.length + (plants.length === 1 ? ' Pflanze' : ' Pflanzen') + ' · sync aktiv';
+  } catch(e) {
+    document.getElementById('status-line').textContent = 'Verbindungsfehler';
+  }
+}
+
+function render() {
+  const needs = plants.filter(p => days(p.watered) >= (p.interval || 7));
+  const urg = document.getElementById('urgent');
+  if (needs.length) {
+    document.getElementById('urgent-text').textContent =
+      needs.length + ' Pflanze' + (needs.length > 1 ? 'n brauchen' : ' braucht') + ' Wasser';
+    urg.classList.add('show');
+  } else {
+    urg.classList.remove('show');
+  }
+
+  const area = document.getElementById('list-area');
+  if (!plants.length) {
+    area.innerHTML = `<div class="empty">
+      <div class="empty-icon">🌱</div>
+      <h2>Noch keine Pflanzen</h2>
+      <p>Tippe auf das + oben rechts,<br>um deine erste Pflanze hinzuzufügen.</p>
+    </div>`;
+    return;
+  }
+
+  const sorted = [...plants].sort((a, b) => days(b.watered) - days(a.watered));
+  area.innerHTML = sorted.map(p => {
+    const s = statusOf(p);
+    const thumb = p.photo
+      ? `<img src="${p.photo}" alt="${p.name}">`
+      : `<div class="pthumb-icon">🌿</div>`;
+    const aiBtn = p.photo
+      ? `<div class="ibtn" onclick="analyze('${p.id}')" title="KI-Analyse">🔍</div>` : '';
+    return `<div class="pcard" id="c-${p.id}">
+      <div class="pcard-inner">
+        <div class="pthumb">
+          ${thumb}
+          <div class="sbar ${s.bar}"></div>
+        </div>
+        <div class="pbody">
+          <div class="ptop">
+            <div style="min-width:0">
+              <div class="pname">${p.name}</div>
+              <div class="ploc">📍 ${p.loc || 'Kein Standort'}</div>
+            </div>
+            <span class="wchip ${s.chip}">${s.label}</span>
+          </div>
+          <div class="pbot">
+            <span class="plast">${wateredText(p.watered)}</span>
+            <div class="pactions">
+              ${aiBtn}
+              <div class="ibtn" onclick="openModal('${p.id}')" title="Bearbeiten">✏️</div>
+              <div class="ibtn" onclick="del('${p.id}')" title="Löschen">🗑️</div>
+              <div class="ibtn ibtn-water" onclick="water('${p.id}')" title="Gegossen">💧</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="ai-${p.id}"></div>
+    </div>`;
+  }).join('');
+}
+
+async function water(id) {
+  const p = plants.find(x => x.id === id);
+  if (!p) return;
+  p.watered = new Date().toISOString().split('T')[0];
+  await fbSet(p);
+  toast('💧 ' + p.name + ' gegossen!');
+  render();
+}
+
+async function del(id) {
+  if (!confirm('Pflanze wirklich löschen?')) return;
+  const p = plants.find(x => x.id === id);
+  if (p?.fbid) await fbDel(p.fbid);
+  plants = plants.filter(x => x.id !== id);
+  render();
+}
+
+async function analyze(id) {
+  const p = plants.find(x => x.id === id);
+  if (!p?.photo) return;
+  const el = document.getElementById('ai-' + id);
+  if (!el) return;
+  el.innerHTML = '<div class="ai-box loading">🔍 KI analysiert das Foto…</div>';
+  try {
+    const b64 = p.photo.split(',')[1];
+    const mt = p.photo.split(';')[0].split(':')[1] || 'image/jpeg';
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 500,
+        system: 'Du bist Pflanzenexperte. Analysiere das Bild in 3–4 kurzen Punkten auf Deutsch mit Emojis. Sei direkt und konkret: Zustand, Wasser, Licht, Dünger. Kein Intro.',
+        messages: [{
+          role: 'user',
+          content: [
+            {type: 'image', source: {type: 'base64', media_type: mt, data: b64}},
+            {type: 'text', text: `Pflanze: "${p.name}"${p.loc ? ', Standort: ' + p.loc : ''}. Gegossen vor ${days(p.watered)} Tagen.`}
+          ]
+        }]
+      })
+    });
+    const data = await res.json();
+    const txt = (data.content || []).map(c => c.text || '').join('');
+    el.innerHTML = `<div class="ai-box"><strong>🤖 KI-Analyse</strong><br><br>${txt.replace(/\n/g, '<br>')}</div>`;
+  } catch {
+    el.innerHTML = '<div class="ai-box" style="color:#C0392B">Fehler – bitte nochmal versuchen.</div>';
+  }
+}
+
+function openModal(id = null) {
+  editId = id; pendingPhoto = null;
+  const p = id ? plants.find(x => x.id === id) : null;
+  document.getElementById('mtitle').textContent = p ? 'Pflanze bearbeiten' : 'Neue Pflanze';
+  document.getElementById('f-name').value    = p?.name || '';
+  document.getElementById('f-loc').value     = p?.loc || '';
+  document.getElementById('f-watered').value = p?.watered || new Date().toISOString().split('T')[0];
+  document.getElementById('f-int').value     = p?.interval || 7;
+  document.getElementById('f-notes').value   = p?.notes || '';
+  const pa = document.getElementById('photo-area');
+  if (p?.photo) {
+    pa.innerHTML = `<img class="photo-prev" src="${p.photo}" onclick="document.getElementById('rep').click()" alt="Pflanzenfoto">
+      <input type="file" id="rep" accept="image/*" style="display:none" onchange="handlePhoto(event)">`;
+  } else {
+    pa.innerHTML = `<div class="photo-zone"><span style="font-size:26px">📷</span><span>Foto vom iPhone hinzufügen</span><input type="file" accept="image/*" onchange="handlePhoto(event)"></div>`;
+  }
+  document.getElementById('mwrap').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('mwrap').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handlePhoto(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    pendingPhoto = ev.target.result;
+    document.getElementById('photo-area').innerHTML =
+      `<img class="photo-prev" src="${pendingPhoto}" alt="Neues Foto">`;
+  };
+  r.readAsDataURL(f);
+}
+
+async function savePlant() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Bitte einen Namen eingeben.'); return; }
+
+  if (editId) {
+    const p = plants.find(x => x.id === editId);
+    p.name     = name;
+    p.loc      = document.getElementById('f-loc').value.trim();
+    p.watered  = document.getElementById('f-watered').value;
+    p.interval = parseInt(document.getElementById('f-int').value) || 7;
+    p.notes    = document.getElementById('f-notes').value.trim();
+    if (pendingPhoto) p.photo = pendingPhoto;
+    await fbSet(p);
+    toast('✅ ' + name + ' gespeichert!');
+  } else {
+    const p = {
+      id: Date.now() + '',
+      name,
+      loc:      document.getElementById('f-loc').value.trim(),
+      watered:  document.getElementById('f-watered').value,
+      interval: parseInt(document.getElementById('f-int').value) || 7,
+      notes:    document.getElementById('f-notes').value.trim(),
+      photo:    pendingPhoto || null,
+      created:  new Date().toISOString()
+    };
+    plants.push(p);
+    await fbSet(p);
+    toast('🌱 ' + name + ' hinzugefügt!');
+  }
+
+  render();
+  closeModal();
+  document.getElementById('status-line').textContent =
+    plants.length + (plants.length === 1 ? ' Pflanze' : ' Pflanzen') + ' · sync aktiv';
+}
+
+load();
+setInterval(load, 20000);
+</script>
+</body>
+</html>
