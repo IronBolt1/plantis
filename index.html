@@ -6,6 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Plantis">
+<meta name="theme-color" content="#2C3E2D">
+<link rel="manifest" href="manifest.json">
 <title>Plantis</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -17,12 +19,11 @@ html,body{height:100%;background:#F7F5F0;font-family:-apple-system,BlinkMacSyste
 .topbar p{font-size:12px;color:#7A9B7C;margin-top:2px}
 .add-btn{width:38px;height:38px;border-radius:50%;background:#4A7C59;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;flex-shrink:0;line-height:1}
 .add-btn:active{background:#3a6347}
-.toast{position:relative;margin:10px 12px 0;background:#2C3E2D;color:#E8F0E9;border-radius:10px;padding:11px 16px;font-size:13px;font-weight:500;text-align:center;display:none}
+.toast{position:relative;margin:10px 12px 0;background:#2C3E2D;color:#E8F0E9;border-radius:10px;padding:11px 16px;font-size:13px;font-weight:500;text-align:center;display:none;z-index:50}
 .toast.show{display:block}
 .toast.error{background:#C0392B}
 .urgent{background:#FFF3E0;border-bottom:1px solid #FFD9A0;padding:10px 20px;display:none;align-items:center;gap:8px;font-size:13px;color:#7A4F00}
 .urgent.show{display:flex}
-.sec-label{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#8A9B8E;padding:16px 20px 8px}
 .pcard{background:#fff;border-radius:16px;margin:0 12px 10px;overflow:hidden;border:.5px solid #E0EAE0}
 .pcard-inner{display:flex;min-height:90px}
 .pthumb{width:90px;flex-shrink:0;background:#D4E8D4;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
@@ -37,9 +38,7 @@ html,body{height:100%;background:#F7F5F0;font-family:-apple-system,BlinkMacSyste
 .pname{font-size:15px;font-weight:600;color:#1A2E1C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ploc{font-size:12px;color:#8A9B8E;margin-top:2px}
 .wchip{flex-shrink:0;font-size:11px;font-weight:600;padding:3px 9px;border-radius:12px;white-space:nowrap}
-.c-ok{background:#E8F5E9;color:#1B5E20}
-.c-soon{background:#FFF3E0;color:#7A4F00}
-.c-now{background:#FFEBEE;color:#B71C1C}
+.c-ok{background:#E8F5E9;color:#1B5E20}.c-soon{background:#FFF3E0;color:#7A4F00}.c-now{background:#FFEBEE;color:#B71C1C}
 .pbot{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
 .plast{font-size:12px;color:#8A9B8E}
 .pactions{display:flex;gap:6px}
@@ -51,10 +50,14 @@ html,body{height:100%;background:#F7F5F0;font-family:-apple-system,BlinkMacSyste
 .ibtn-water:active{background:#3a6347}
 .ibtn-water .ibtn-label{color:#9FD4B0}
 .ibtn-del .ibtn-label{color:#C0392B}
+.ibtn-scan{background:#1A4A8A;border-color:#1A4A8A}
+.ibtn-scan .ibtn-label{color:#A0C4FF}
 .empty{text-align:center;padding:64px 24px}
 .empty-icon{font-size:56px;margin-bottom:16px}
 .empty h2{font-size:18px;font-weight:600;color:#3A4E3C;margin-bottom:8px}
 .empty p{font-size:14px;color:#8A9B8E;line-height:1.6}
+
+/* Modal */
 .mwrap{display:none;position:fixed;inset:0;z-index:100}
 .mwrap.open{display:block}
 .mback{position:absolute;inset:0;background:rgba(0,0,0,.5)}
@@ -69,18 +72,44 @@ html,body{height:100%;background:#F7F5F0;font-family:-apple-system,BlinkMacSyste
 input[type=text],input[type=date],input[type=number],textarea{width:100%;padding:11px 13px;border:1.5px solid #E0EAE0;border-radius:11px;font-size:15px;color:#1A2E1C;background:#FAFCFA;font-family:inherit;outline:none;-webkit-appearance:none}
 input:focus,textarea:focus{border-color:#4A7C59;background:#fff}
 textarea{height:76px;resize:none}
-.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .photo-zone{width:100%;height:110px;border:2px dashed #C0D4C0;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;cursor:pointer;background:#F5FAF5;position:relative;color:#7A9B7C;font-size:13px;font-weight:500}
 .photo-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .photo-prev{width:100%;height:110px;border-radius:11px;object-fit:cover;border:1.5px solid #E0EAE0;cursor:pointer;display:block}
 .mfoot{padding:12px 20px 4px;display:flex;gap:10px}
-.btn-save{flex:1;padding:14px;background:#2C3E2D;color:#E8F0E9;border:none;border-radius:13px;font-size:16px;font-weight:600;cursor:pointer;position:relative}
+.btn-save{flex:1;padding:14px;background:#2C3E2D;color:#E8F0E9;border:none;border-radius:13px;font-size:16px;font-weight:600;cursor:pointer}
 .btn-save:active{background:#1a2e1c}
 .btn-save:disabled{opacity:.6;cursor:not-allowed}
 .btn-cancel{padding:14px 18px;background:#F0F0F0;color:#666;border:none;border-radius:13px;font-size:16px;cursor:pointer}
-.loading-screen{display:flex;align-items:center;justify-content:center;height:200px;color:#8A9B8E;font-size:15px;gap:10px}
 
-/* Native-style delete confirmation sheet */
+/* Interval presets */
+.interval-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.ipreset{padding:6px 12px;border-radius:20px;border:1.5px solid #E0EAE0;background:#FAFCFA;font-size:12px;font-weight:600;color:#4A6E4C;cursor:pointer}
+.ipreset.active{background:#2C3E2D;border-color:#2C3E2D;color:#E8F0E9}
+
+/* AI result box */
+.ai-result{background:#F0F7F1;border:1.5px solid #B8D8BB;border-radius:12px;padding:13px 14px;margin-bottom:4px;display:none}
+.ai-result.show{display:block}
+.ai-result-title{font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:6px}
+.ai-result-row{font-size:12px;color:#3A4E3C;margin:3px 0;display:flex;gap:6px}
+.ai-result-row span:first-child{font-weight:600;min-width:70px}
+.ai-apply{margin-top:10px;width:100%;padding:9px;background:#4A7C59;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer}
+.ai-apply:active{background:#3a6347}
+.ai-disease{background:#FFF3E0;border-color:#FFD9A0;margin-top:8px}
+.ai-disease .ai-result-title{color:#7A4F00}
+
+/* Scan modal overlay */
+.scan-overlay{display:none;position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center}
+.scan-overlay.open{display:flex}
+.scan-sheet{background:#fff;width:100%;max-width:430px;border-radius:20px 20px 0 0;padding:20px 20px calc(env(safe-area-inset-bottom,24px) + 16px)}
+.scan-title{font-size:17px;font-weight:700;color:#1A2E1C;margin-bottom:6px}
+.scan-sub{font-size:13px;color:#8A9B8E;margin-bottom:16px}
+.scan-photo-zone{width:100%;height:150px;border:2px dashed #C0D4C0;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;background:#F5FAF5;position:relative;color:#7A9B7C;font-size:14px;font-weight:500}
+.scan-photo-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.scan-photo-prev{width:100%;height:150px;border-radius:11px;object-fit:cover;display:block}
+.scan-result{margin-top:14px}
+.scan-close{width:100%;margin-top:12px;padding:14px;background:#F0F0F0;color:#555;border:none;border-radius:13px;font-size:16px;cursor:pointer}
+
+/* Delete confirm */
 .confirm-wrap{display:none;position:fixed;inset:0;z-index:200}
 .confirm-wrap.open{display:block}
 .confirm-back{position:absolute;inset:0;background:rgba(0,0,0,.4)}
@@ -88,14 +117,23 @@ textarea{height:76px;resize:none}
 .confirm-box{background:#fff;border-radius:14px;overflow:hidden;margin-bottom:8px}
 .confirm-title{padding:16px 20px 8px;text-align:center;font-size:13px;font-weight:600;color:#1A2E1C}
 .confirm-msg{padding:0 20px 16px;text-align:center;font-size:13px;color:#8A9B8E}
-.confirm-divider{height:.5px;background:#E0E0E0;margin:0 0}
+.confirm-divider{height:.5px;background:#E0E0E0}
 .confirm-del-btn{width:100%;padding:16px;background:none;border:none;font-size:17px;font-weight:600;color:#C0392B;cursor:pointer}
 .confirm-cancel-btn{width:100%;padding:17px;background:#fff;border:none;border-radius:14px;font-size:17px;font-weight:600;color:#4A7C59;cursor:pointer}
 
-/* Interval preset chips */
-.interval-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.ipreset{padding:6px 12px;border-radius:20px;border:1.5px solid #E0EAE0;background:#FAFCFA;font-size:12px;font-weight:600;color:#4A6E4C;cursor:pointer}
-.ipreset.active{background:#2C3E2D;border-color:#2C3E2D;color:#E8F0E9}
+/* PWA install banner */
+.pwa-banner{background:#1A2E1C;color:#E8F0E9;margin:10px 12px 0;border-radius:12px;padding:12px 14px;display:none;align-items:center;gap:10px;font-size:13px}
+.pwa-banner.show{display:flex}
+.pwa-banner-text{flex:1;line-height:1.4}
+.pwa-banner strong{display:block;margin-bottom:2px}
+.pwa-banner-dismiss{background:none;border:none;color:#7A9B7C;font-size:20px;cursor:pointer;padding:0;line-height:1}
+
+/* Push permission bar */
+.push-bar{background:#E8F5E9;border:1px solid #B8D8BB;margin:8px 12px 0;border-radius:10px;padding:10px 14px;display:none;align-items:center;gap:10px;font-size:13px;color:#1B5E20}
+.push-bar.show{display:flex}
+.push-bar-text{flex:1}
+.push-enable-btn{background:#4A7C59;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.loading-screen{display:flex;align-items:center;justify-content:center;height:200px;color:#8A9B8E;font-size:15px;gap:10px}
 </style>
 </head>
 <body>
@@ -110,11 +148,23 @@ textarea{height:76px;resize:none}
     </div>
   </div>
   <div id="toast" class="toast"></div>
+  <div id="pwa-banner" class="pwa-banner">
+    <span style="font-size:24px">📲</span>
+    <div class="pwa-banner-text">
+      <strong>Zum Homescreen hinzufügen</strong>
+      Für Push-Benachrichtigungen: Safari → Teilen → „Zum Home-Bildschirm"
+    </div>
+    <button class="pwa-banner-dismiss" onclick="dismissPwaBanner()">✕</button>
+  </div>
+  <div id="push-bar" class="push-bar">
+    <div class="push-bar-text">🔔 Giess-Erinnerungen aktivieren?</div>
+    <button class="push-enable-btn" onclick="enablePush()">Aktivieren</button>
+  </div>
   <div id="urgent" class="urgent">⚠️ <span id="urgent-text"></span></div>
   <div id="list-area"><div class="loading-screen">⏳ Lädt…</div></div>
 </div>
 
-<!-- Add / Edit Modal -->
+<!-- Add/Edit Modal -->
 <div class="mwrap" id="mwrap">
   <div class="mback" onclick="closeModal()"></div>
   <div class="msheet">
@@ -124,6 +174,17 @@ textarea{height:76px;resize:none}
       <button class="mclose" onclick="closeModal()">✕</button>
     </div>
     <div class="mbody">
+      <div class="flabel">Foto</div>
+      <div id="photo-area">
+        <div class="photo-zone">
+          <span style="font-size:26px">📷</span>
+          <span>Foto hinzufügen · KI erkennt die Pflanze</span>
+          <input type="file" accept="image/*" onchange="handlePhoto(event)">
+        </div>
+      </div>
+      <div id="ai-identify-result" class="ai-result"></div>
+      <div id="ai-disease-result" class="ai-result ai-disease"></div>
+
       <div class="flabel">Name *</div>
       <input type="text" id="f-name" placeholder="z.B. Monstera, Basilikum…">
       <div class="flabel">Standort</div>
@@ -140,14 +201,6 @@ textarea{height:76px;resize:none}
       <input type="date" id="f-watered">
       <div class="flabel">Notizen</div>
       <textarea id="f-notes" placeholder="Besonderheiten, Dünger, Tipps…"></textarea>
-      <div class="flabel">Foto</div>
-      <div id="photo-area">
-        <div class="photo-zone">
-          <span style="font-size:26px">📷</span>
-          <span>Foto hinzufügen</span>
-          <input type="file" accept="image/*" onchange="handlePhoto(event)">
-        </div>
-      </div>
     </div>
     <div class="mfoot">
       <button class="btn-cancel" onclick="closeModal()">Abbrechen</button>
@@ -156,7 +209,24 @@ textarea{height:76px;resize:none}
   </div>
 </div>
 
-<!-- Native-style Delete Confirmation -->
+<!-- Scan Disease Modal -->
+<div class="scan-overlay" id="scan-overlay">
+  <div class="scan-sheet">
+    <div class="scan-title">🔍 Krankheit erkennen</div>
+    <div class="scan-sub" id="scan-sub">Foto der betroffenen Stelle hochladen</div>
+    <div id="scan-photo-area">
+      <div class="scan-photo-zone">
+        <span style="font-size:30px">📷</span>
+        <span>Foto der Pflanze</span>
+        <input type="file" accept="image/*" onchange="handleScanPhoto(event)">
+      </div>
+    </div>
+    <div id="scan-result" class="scan-result"></div>
+    <button class="scan-close" onclick="closeScan()">Schliessen</button>
+  </div>
+</div>
+
+<!-- Delete Confirm -->
 <div class="confirm-wrap" id="confirm-wrap">
   <div class="confirm-back" onclick="closeConfirm()"></div>
   <div class="confirm-sheet">
@@ -171,32 +241,35 @@ textarea{height:76px;resize:none}
 </div>
 
 <script>
-const FB = 'https://plantis-5934a-default-rtdb.europe-west1.firebasedatabase.app';
-const PATH = '/pflanzen';
+// ─── CONFIG – trage deine Keys hier ein ──────────────────────────────────────
+const PLANT_ID_KEY    = 'DEIN_PLANT_ID_KEY_HIER';         // plant.id API Key
+const VAPID_PUBLIC    = 'DEIN_VAPID_PUBLIC_KEY_HIER';     // von vapidkeys.com
+const WORKER_URL      = 'DEINE_CLOUDFLARE_WORKER_URL_HIER'; // z.B. https://plantis-push.deinname.workers.dev
+const FB              = 'https://plantis-5934a-default-rtdb.europe-west1.firebasedatabase.app';
+const PATH            = '/pflanzen';
+
+// ─── State ───────────────────────────────────────────────────────────────────
 let plants = [];
 let editId = null;
 let pendingPhoto = null;
-let confirmCallback = null;
+let lastAiData = null;
+let scanPlantId = null;
 
-// ─── Utilities ────────────────────────────────────────────────────────────────
-
+// ─── Utils ───────────────────────────────────────────────────────────────────
 function uuid() {
   return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
 }
-
 function days(d) {
   if (!d) return 999;
   return Math.floor((Date.now() - new Date(d)) / 86400000);
 }
-
 function statusOf(p) {
   const d = days(p.watered), iv = p.interval || 7;
   if (d >= iv)       return {bar:'s-now',  chip:'c-now',  label:'Jetzt giessen!'};
   if (d >= iv * 0.7) return {bar:'s-soon', chip:'c-soon', label:'Bald giessen'};
   return                    {bar:'s-ok',   chip:'c-ok',   label:'Gut versorgt'};
 }
-
 function wateredText(d) {
   const n = days(d);
   if (n === 0)  return 'Heute gegossen';
@@ -204,7 +277,6 @@ function wateredText(d) {
   if (n >= 999) return 'Noch nie gegossen';
   return 'Vor ' + n + ' Tagen';
 }
-
 function toast(msg, isError = false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -215,10 +287,7 @@ function toast(msg, isError = false) {
 }
 
 // ─── Photo Compression ────────────────────────────────────────────────────────
-// Resizes to max 800px and compresses to JPEG 0.75 before storing.
-// Reduces typical iPhone photo from ~4MB base64 to ~60–120KB.
-
-function compressPhoto(file) {
+function compressPhoto(file, maxPx = 800, quality = 0.75) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Foto konnte nicht gelesen werden.'));
@@ -226,16 +295,15 @@ function compressPhoto(file) {
       const img = new Image();
       img.onerror = () => reject(new Error('Foto konnte nicht verarbeitet werden.'));
       img.onload = () => {
-        const MAX = 800;
         let {width: w, height: h} = img;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else       { w = Math.round(w * MAX / h); h = MAX; }
+        if (w > maxPx || h > maxPx) {
+          if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+          else       { w = Math.round(w * maxPx / h); h = maxPx; }
         }
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.75));
+        resolve(canvas.toDataURL('image/jpeg', quality));
       };
       img.src = ev.target.result;
     };
@@ -243,8 +311,184 @@ function compressPhoto(file) {
   });
 }
 
-// ─── Firebase ────────────────────────────────────────────────────────────────
+// ─── Plant.id API ─────────────────────────────────────────────────────────────
+async function identifyPlant(base64img) {
+  // Strip data URL prefix
+  const imageData = base64img.split(',')[1];
+  const res = await fetch('https://api.plant.id/v3/identification', {
+    method: 'POST',
+    headers: {
+      'Api-Key': PLANT_ID_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      images: [imageData],
+      similar_images: false,
+      plant_details: ['common_names','watering','sunlight','best_watering','best_light_condition','description']
+    })
+  });
+  if (!res.ok) throw new Error('Plant.id Fehler: ' + res.status);
+  return res.json();
+}
 
+async function checkDisease(base64img) {
+  const imageData = base64img.split(',')[1];
+  const res = await fetch('https://api.plant.id/v3/health_assessment', {
+    method: 'POST',
+    headers: {
+      'Api-Key': PLANT_ID_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      images: [imageData],
+      similar_images: false,
+      disease_details: ['description','treatment']
+    })
+  });
+  if (!res.ok) throw new Error('Plant.id Fehler: ' + res.status);
+  return res.json();
+}
+
+function showAiIdentifyResult(data) {
+  const box = document.getElementById('ai-identify-result');
+  const diseaseBox = document.getElementById('ai-disease-result');
+
+  if (!data?.result?.classification?.suggestions?.length) {
+    box.innerHTML = '<div class="ai-result-title">❓ Pflanze nicht erkannt</div>';
+    box.classList.add('show');
+    return;
+  }
+
+  const top = data.result.classification.suggestions[0];
+  const name = top.name || '';
+  const common = top.details?.common_names?.[0] || '';
+  const desc = top.details?.description?.value || '';
+  const watering = top.details?.best_watering || top.details?.watering?.max || '';
+  const light = top.details?.best_light_condition || top.details?.sunlight?.[0] || '';
+  const prob = Math.round((top.probability || 0) * 100);
+
+  // Try to map watering text to interval days
+  let suggestedDays = 7;
+  const wl = watering.toLowerCase();
+  if (wl.includes('daily') || wl.includes('täglich')) suggestedDays = 1;
+  else if (wl.includes('every 2') || wl.includes('alle 2')) suggestedDays = 2;
+  else if (wl.includes('every 3')) suggestedDays = 3;
+  else if (wl.includes('week') || wl.includes('woche')) suggestedDays = 7;
+  else if (wl.includes('two week') || wl.includes('14')) suggestedDays = 14;
+  else if (wl.includes('month') || wl.includes('monat')) suggestedDays = 30;
+
+  lastAiData = { name: common || name, days: suggestedDays, notes: desc ? desc.slice(0,120) : '' };
+
+  box.innerHTML = `
+    <div class="ai-result-title">🌿 ${common || name} · ${prob}% sicher</div>
+    ${name !== common ? `<div class="ai-result-row"><span>Wissenschaftl.</span><span>${name}</span></div>` : ''}
+    ${watering ? `<div class="ai-result-row"><span>💧 Giessen</span><span>${watering}</span></div>` : ''}
+    ${light ? `<div class="ai-result-row"><span>☀️ Licht</span><span>${light}</span></div>` : ''}
+    ${desc ? `<div class="ai-result-row" style="flex-direction:column"><span>Info</span><span style="color:#555;margin-top:2px">${desc.slice(0,120)}…</span></div>` : ''}
+    <button class="ai-apply" onclick="applyAiData()">✓ Daten übernehmen</button>
+  `;
+  box.classList.add('show');
+  diseaseBox.classList.remove('show');
+
+  // Check for disease at the same time
+  if (pendingPhoto) {
+    checkDisease(pendingPhoto).then(dr => {
+      const isHealthy = dr?.result?.is_healthy?.binary;
+      if (isHealthy === false) {
+        const dis = dr?.result?.disease?.suggestions?.[0];
+        const disName = dis?.name || 'Unbekannte Krankheit';
+        const treatment = dis?.details?.treatment?.biological?.[0] || dis?.details?.treatment?.chemical?.[0] || '';
+        diseaseBox.innerHTML = `
+          <div class="ai-result-title">⚠️ Mögliches Problem erkannt: ${disName}</div>
+          ${treatment ? `<div class="ai-result-row"><span>Behandlung</span><span>${treatment}</span></div>` : ''}
+        `;
+        diseaseBox.classList.add('show');
+      }
+    }).catch(() => {});
+  }
+}
+
+function applyAiData() {
+  if (!lastAiData) return;
+  if (lastAiData.name && !document.getElementById('f-name').value) {
+    document.getElementById('f-name').value = lastAiData.name;
+  }
+  document.getElementById('f-int').value = lastAiData.days;
+  syncPresets();
+  if (lastAiData.notes && !document.getElementById('f-notes').value) {
+    document.getElementById('f-notes').value = lastAiData.notes;
+  }
+  toast('✓ KI-Daten übernommen');
+}
+
+// ─── Disease Scan (for existing plant) ───────────────────────────────────────
+function openScan(plantId) {
+  scanPlantId = plantId;
+  const p = plants.find(x => x.id === plantId);
+  document.getElementById('scan-sub').textContent =
+    p ? `Foto für "${p.name}" – betroffene Stelle zeigen` : 'Foto der betroffenen Stelle hochladen';
+  document.getElementById('scan-result').innerHTML = '';
+  document.getElementById('scan-photo-area').innerHTML = `
+    <div class="scan-photo-zone">
+      <span style="font-size:30px">📷</span>
+      <span>Foto der Pflanze</span>
+      <input type="file" accept="image/*" onchange="handleScanPhoto(event)">
+    </div>`;
+  document.getElementById('scan-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeScan() {
+  document.getElementById('scan-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  scanPlantId = null;
+}
+
+async function handleScanPhoto(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const pa = document.getElementById('scan-photo-area');
+  const result = document.getElementById('scan-result');
+  pa.innerHTML = `<div class="scan-photo-zone" style="opacity:.5"><span style="font-size:30px">⏳</span><span>Analysiere…</span></div>`;
+  result.innerHTML = '';
+  try {
+    const compressed = await compressPhoto(f, 1024, 0.85);
+    pa.innerHTML = `<img class="scan-photo-prev" src="${compressed}">`;
+    const [idData, healthData] = await Promise.all([
+      identifyPlant(compressed),
+      checkDisease(compressed)
+    ]);
+    let html = '';
+    // Identity
+    const top = idData?.result?.classification?.suggestions?.[0];
+    if (top) {
+      const prob = Math.round((top.probability||0)*100);
+      html += `<div class="ai-result show" style="margin-bottom:8px">
+        <div class="ai-result-title">🌿 ${top.details?.common_names?.[0] || top.name} · ${prob}%</div>
+        ${top.details?.best_watering ? `<div class="ai-result-row"><span>💧 Giessen</span><span>${top.details.best_watering}</span></div>` : ''}
+        ${top.details?.best_light_condition ? `<div class="ai-result-row"><span>☀️ Licht</span><span>${top.details.best_light_condition}</span></div>` : ''}
+      </div>`;
+    }
+    // Health
+    const isHealthy = healthData?.result?.is_healthy?.binary;
+    if (isHealthy === false) {
+      const dis = healthData?.result?.disease?.suggestions?.[0];
+      const disName = dis?.name || 'Problem erkannt';
+      const treatment = dis?.details?.treatment?.biological?.[0] || dis?.details?.treatment?.chemical?.[0] || '';
+      html += `<div class="ai-result ai-disease show">
+        <div class="ai-result-title">⚠️ ${disName}</div>
+        ${treatment ? `<div class="ai-result-row"><span>Behandlung</span><span>${treatment}</span></div>` : ''}
+        ${dis?.details?.description?.value ? `<div class="ai-result-row" style="flex-direction:column"><span>Info</span><span style="color:#555;margin-top:2px">${dis.details.description.value.slice(0,150)}…</span></div>` : ''}
+      </div>`;
+    } else if (isHealthy === true) {
+      html += `<div class="ai-result show"><div class="ai-result-title">✅ Pflanze sieht gesund aus</div></div>`;
+    }
+    result.innerHTML = html || '<div class="ai-result show"><div class="ai-result-title">❓ Keine Ergebnisse</div></div>';
+  } catch(err) {
+    result.innerHTML = `<div class="ai-result show"><div class="ai-result-title">⚠️ Fehler: ${err.message}</div></div>`;
+  }
+}
+
+// ─── Firebase ─────────────────────────────────────────────────────────────────
 async function fbGet() {
   const r = await fetch(FB + PATH + '.json');
   if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -252,35 +496,27 @@ async function fbGet() {
   if (!d) return [];
   return Object.entries(d).map(([fbid, v]) => ({...v, fbid}));
 }
-
 async function fbSet(plant) {
   const {fbid, ...data} = plant;
   if (fbid) {
     const r = await fetch(FB + PATH + '/' + fbid + '.json', {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(data)
+      method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
     });
     if (!r.ok) throw new Error('Speichern fehlgeschlagen (HTTP ' + r.status + ')');
   } else {
     const r = await fetch(FB + PATH + '.json', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(data)
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
     });
     if (!r.ok) throw new Error('Speichern fehlgeschlagen (HTTP ' + r.status + ')');
-    const d = await r.json();
-    plant.fbid = d.name;
+    plant.fbid = (await r.json()).name;
   }
 }
-
 async function fbDel(fbid) {
   const r = await fetch(FB + PATH + '/' + fbid + '.json', {method:'DELETE'});
   if (!r.ok) throw new Error('Löschen fehlgeschlagen (HTTP ' + r.status + ')');
 }
 
 // ─── Load & Render ────────────────────────────────────────────────────────────
-
 async function load() {
   try {
     plants = await fbGet();
@@ -290,7 +526,7 @@ async function load() {
       n + (n === 1 ? ' Pflanze' : ' Pflanzen') + ' · sync aktiv';
   } catch(e) {
     document.getElementById('status-line').textContent = 'Verbindungsfehler';
-    toast('⚠️ Firebase nicht erreichbar – prüfe deine Verbindung.', true);
+    toast('⚠️ Firebase nicht erreichbar.', true);
   }
 }
 
@@ -304,7 +540,6 @@ function render() {
   } else {
     urg.classList.remove('show');
   }
-
   const area = document.getElementById('list-area');
   if (!plants.length) {
     area.innerHTML = `<div class="empty">
@@ -314,8 +549,7 @@ function render() {
     </div>`;
     return;
   }
-
-  const sorted = [...plants].sort((a, b) => days(b.watered) - days(a.watered));
+  const sorted = [...plants].sort((a,b) => days(b.watered) - days(a.watered));
   area.innerHTML = sorted.map(p => {
     const s = statusOf(p);
     const thumb = p.photo
@@ -323,10 +557,7 @@ function render() {
       : `<div class="pthumb-icon">🌿</div>`;
     return `<div class="pcard" id="c-${p.id}">
       <div class="pcard-inner">
-        <div class="pthumb">
-          ${thumb}
-          <div class="sbar ${s.bar}"></div>
-        </div>
+        <div class="pthumb">${thumb}<div class="sbar ${s.bar}"></div></div>
         <div class="pbody">
           <div class="ptop">
             <div style="min-width:0">
@@ -338,6 +569,10 @@ function render() {
           <div class="pbot">
             <span class="plast">${wateredText(p.watered)}</span>
             <div class="pactions">
+              <div class="ibtn ibtn-scan" onclick="openScan('${p.id}')">
+                <span class="ibtn-emoji">🔍</span>
+                <span class="ibtn-label">Scan</span>
+              </div>
               <div class="ibtn" onclick="openModal('${p.id}')">
                 <span class="ibtn-emoji">✏️</span>
                 <span class="ibtn-label">Edit</span>
@@ -358,71 +593,45 @@ function render() {
   }).join('');
 }
 
-// ─── Actions ─────────────────────────────────────────────────────────────────
-
+// ─── Actions ──────────────────────────────────────────────────────────────────
 async function water(id) {
-  const p = plants.find(x => x.id === id);
-  if (!p) return;
+  const p = plants.find(x => x.id === id); if (!p) return;
   const prev = p.watered;
   p.watered = new Date().toISOString().split('T')[0];
   render();
-  try {
-    await fbSet(p);
-    toast('💧 ' + p.name + ' gegossen!');
-  } catch(e) {
-    p.watered = prev; // rollback
-    render();
-    toast('⚠️ Konnte nicht gespeichert werden: ' + e.message, true);
-  }
+  try { await fbSet(p); toast('💧 ' + p.name + ' gegossen!'); }
+  catch(e) { p.watered = prev; render(); toast('⚠️ ' + e.message, true); }
 }
 
-// Native-style confirmation sheet instead of browser confirm()
 function confirmDel(id) {
-  const p = plants.find(x => x.id === id);
-  if (!p) return;
+  const p = plants.find(x => x.id === id); if (!p) return;
   document.getElementById('confirm-title').textContent = '"' + p.name + '" löschen?';
   document.getElementById('confirm-del-btn').onclick = () => del(id);
   document.getElementById('confirm-wrap').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-
 function closeConfirm() {
   document.getElementById('confirm-wrap').classList.remove('open');
   document.body.style.overflow = '';
 }
-
 async function del(id) {
   closeConfirm();
-  const p = plants.find(x => x.id === id);
-  if (!p) return;
-  plants = plants.filter(x => x.id !== id);
-  render();
-  try {
-    if (p.fbid) await fbDel(p.fbid);
-    toast('🗑️ ' + p.name + ' gelöscht');
-  } catch(e) {
-    plants.push(p); // rollback
-    render();
-    toast('⚠️ Löschen fehlgeschlagen: ' + e.message, true);
-  }
+  const p = plants.find(x => x.id === id); if (!p) return;
+  plants = plants.filter(x => x.id !== id); render();
+  try { if (p.fbid) await fbDel(p.fbid); toast('🗑️ ' + p.name + ' gelöscht'); }
+  catch(e) { plants.push(p); render(); toast('⚠️ ' + e.message, true); }
 }
 
-// ─── Modal ───────────────────────────────────────────────────────────────────
-
-function setPreset(days) {
-  document.getElementById('f-int').value = days;
-  syncPresets();
-}
-
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function setPreset(d) { document.getElementById('f-int').value = d; syncPresets(); }
 function syncPresets() {
   const val = parseInt(document.getElementById('f-int').value);
-  document.querySelectorAll('.ipreset').forEach(btn => {
-    btn.classList.toggle('active', parseInt(btn.dataset.days) === val);
-  });
+  document.querySelectorAll('.ipreset').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.days) === val));
 }
 
 function openModal(id = null) {
-  editId = id; pendingPhoto = null;
+  editId = id; pendingPhoto = null; lastAiData = null;
   const p = id ? plants.find(x => x.id === id) : null;
   document.getElementById('mtitle').textContent = p ? 'Pflanze bearbeiten' : 'Neue Pflanze';
   document.getElementById('f-name').value    = p?.name || '';
@@ -430,6 +639,8 @@ function openModal(id = null) {
   document.getElementById('f-watered').value = p?.watered || new Date().toISOString().split('T')[0];
   document.getElementById('f-int').value     = p?.interval || 7;
   document.getElementById('f-notes').value   = p?.notes || '';
+  document.getElementById('ai-identify-result').classList.remove('show');
+  document.getElementById('ai-disease-result').classList.remove('show');
   syncPresets();
   const pa = document.getElementById('photo-area');
   if (p?.photo) {
@@ -437,28 +648,35 @@ function openModal(id = null) {
       <div style="font-size:12px;color:#8A9B8E;text-align:center;margin-top:6px">Tippen zum Ersetzen</div>
       <input type="file" id="rep" accept="image/*" style="display:none" onchange="handlePhoto(event)">`;
   } else {
-    pa.innerHTML = `<div class="photo-zone"><span style="font-size:26px">📷</span><span>Foto hinzufügen</span><input type="file" accept="image/*" onchange="handlePhoto(event)"></div>`;
+    pa.innerHTML = `<div class="photo-zone"><span style="font-size:26px">📷</span><span>Foto hinzufügen · KI erkennt die Pflanze</span><input type="file" accept="image/*" onchange="handlePhoto(event)"></div>`;
   }
   document.getElementById('mwrap').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-
 function closeModal() {
   document.getElementById('mwrap').classList.remove('open');
   document.body.style.overflow = '';
 }
 
 async function handlePhoto(e) {
-  const f = e.target.files[0];
-  if (!f) return;
+  const f = e.target.files[0]; if (!f) return;
   const pa = document.getElementById('photo-area');
-  pa.innerHTML = `<div class="photo-zone" style="opacity:.5"><span style="font-size:26px">⏳</span><span>Komprimiere…</span></div>`;
+  const aiBox = document.getElementById('ai-identify-result');
+  pa.innerHTML = `<div class="photo-zone" style="opacity:.5"><span style="font-size:26px">⏳</span><span>Komprimiere & analysiere…</span></div>`;
+  aiBox.classList.remove('show');
   try {
     pendingPhoto = await compressPhoto(f);
     pa.innerHTML = `<img class="photo-prev" src="${pendingPhoto}" alt="Neues Foto">
       <div style="font-size:12px;color:#8A9B8E;text-align:center;margin-top:6px">Tippen zum Ersetzen</div>
       <input type="file" id="rep2" accept="image/*" style="display:none" onchange="handlePhoto(event)">`;
     pa.querySelector('img').onclick = () => document.getElementById('rep2').click();
+    // Auto-identify
+    if (PLANT_ID_KEY && PLANT_ID_KEY !== 'DEIN_PLANT_ID_KEY_HIER') {
+      aiBox.innerHTML = `<div class="ai-result-title">🔍 Pflanze wird erkannt…</div>`;
+      aiBox.classList.add('show');
+      const data = await identifyPlant(pendingPhoto);
+      showAiIdentifyResult(data);
+    }
   } catch(err) {
     pendingPhoto = null;
     pa.innerHTML = `<div class="photo-zone"><span style="font-size:26px">📷</span><span>Foto hinzufügen</span><input type="file" accept="image/*" onchange="handlePhoto(event)"></div>`;
@@ -469,51 +687,121 @@ async function handlePhoto(e) {
 async function savePlant() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { toast('⚠️ Bitte einen Namen eingeben.', true); return; }
-
   const btn = document.getElementById('btn-save');
-  btn.disabled = true;
-  btn.textContent = 'Speichert…';
-
+  btn.disabled = true; btn.textContent = 'Speichert…';
   try {
     if (editId) {
       const p = plants.find(x => x.id === editId);
-      p.name     = name;
-      p.loc      = document.getElementById('f-loc').value.trim();
-      p.watered  = document.getElementById('f-watered').value;
+      p.name = name;
+      p.loc = document.getElementById('f-loc').value.trim();
+      p.watered = document.getElementById('f-watered').value;
       p.interval = parseInt(document.getElementById('f-int').value) || 7;
-      p.notes    = document.getElementById('f-notes').value.trim();
+      p.notes = document.getElementById('f-notes').value.trim();
       if (pendingPhoto) p.photo = pendingPhoto;
-      await fbSet(p);
-      toast('✅ ' + name + ' gespeichert!');
+      await fbSet(p); toast('✅ ' + name + ' gespeichert!');
     } else {
       const p = {
-        id:       uuid(),
-        name,
-        loc:      document.getElementById('f-loc').value.trim(),
-        watered:  document.getElementById('f-watered').value,
+        id: uuid(), name,
+        loc: document.getElementById('f-loc').value.trim(),
+        watered: document.getElementById('f-watered').value,
         interval: parseInt(document.getElementById('f-int').value) || 7,
-        notes:    document.getElementById('f-notes').value.trim(),
-        photo:    pendingPhoto || null,
-        created:  new Date().toISOString()
+        notes: document.getElementById('f-notes').value.trim(),
+        photo: pendingPhoto || null,
+        created: new Date().toISOString()
       };
       plants.push(p);
-      await fbSet(p);
-      toast('🌱 ' + name + ' hinzugefügt!');
+      await fbSet(p); toast('🌱 ' + name + ' hinzugefügt!');
     }
-    render();
-    closeModal();
+    render(); closeModal();
   } catch(e) {
-    toast('⚠️ Fehler beim Speichern: ' + e.message, true);
+    toast('⚠️ Fehler: ' + e.message, true);
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Speichern';
+    btn.disabled = false; btn.textContent = 'Speichern';
   }
 }
 
+// ─── PWA & Push ───────────────────────────────────────────────────────────────
+async function initPwa() {
+  // Service Worker registration
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    await navigator.serviceWorker.register('/plantis/sw.js');
+  } catch(e) {
+    console.warn('SW registration failed:', e);
+  }
+
+  // Check if running as PWA (standalone = installed to homescreen)
+  const isPwa = window.matchMedia('(display-mode: standalone)').matches
+    || navigator.standalone === true;
+
+  if (!isPwa) {
+    // Show install banner if not dismissed
+    if (!localStorage.getItem('pwa-banner-dismissed')) {
+      document.getElementById('pwa-banner').classList.add('show');
+    }
+    return; // Can't use push without PWA
+  }
+
+  // Running as PWA – check push permission
+  if (!('PushManager' in window)) return;
+  const perm = Notification.permission;
+  if (perm === 'default') {
+    document.getElementById('push-bar').classList.add('show');
+  } else if (perm === 'granted') {
+    await subscribePush();
+  }
+}
+
+function dismissPwaBanner() {
+  document.getElementById('pwa-banner').classList.remove('show');
+  localStorage.setItem('pwa-banner-dismissed', '1');
+}
+
+async function enablePush() {
+  document.getElementById('push-bar').classList.remove('show');
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    await subscribePush();
+    toast('🔔 Giess-Erinnerungen aktiviert!');
+  }
+}
+
+async function subscribePush() {
+  if (WORKER_URL === 'DEINE_CLOUDFLARE_WORKER_URL_HIER') return;
+  if (VAPID_PUBLIC === 'DEIN_VAPID_PUBLIC_KEY_HIER') return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlB64ToUint8(VAPID_PUBLIC)
+      });
+    }
+    // Send subscription to Cloudflare Worker
+    const userId = localStorage.getItem('plantis-uid') || (() => {
+      const id = uuid(); localStorage.setItem('plantis-uid', id); return id;
+    })();
+    await fetch(WORKER_URL + '/subscribe', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ subscription: sub.toJSON(), userId })
+    });
+  } catch(e) {
+    console.warn('Push subscribe failed:', e);
+  }
+}
+
+function urlB64ToUint8(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
-// Kein setInterval – lädt nur einmal beim Start.
-// Manuell neu laden: Seite neu laden oder Pull-to-Refresh (iOS Safari).
 load();
+initPwa();
 </script>
 </body>
 </html>
