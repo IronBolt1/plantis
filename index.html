@@ -314,15 +314,14 @@ function compressPhoto(file, maxPx = 800, quality = 0.75) {
 // ─── Plant.id API ─────────────────────────────────────────────────────────────
 async function identifyPlant(base64img) {
   const imageData = base64img.includes(',') ? base64img.split(',')[1] : base64img;
-  const res = await fetch('https://plant.id/api/v3/identification?details=common_names,watering,sunlight,best_watering,best_light_condition,description&language=de', {
+  const res = await fetch('https://api.plant.id/v3/identification?details=common_names,watering,sunlight,best_watering,best_light_condition,description&language=de', {
     method: 'POST',
     headers: {
       'Api-Key': PLANT_ID_KEY,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      images: ['data:image/jpeg;base64,' + imageData],
-      similar_images: false
+      images: ['data:image/jpeg;base64,' + imageData]
     })
   });
   if (!res.ok) {
@@ -334,15 +333,14 @@ async function identifyPlant(base64img) {
 
 async function checkDisease(base64img) {
   const imageData = base64img.includes(',') ? base64img.split(',')[1] : base64img;
-  const res = await fetch('https://plant.id/api/v3/health_assessment?details=local_name,description,treatment,classification&language=de', {
+  const res = await fetch('https://api.plant.id/v3/health_assessment?details=local_name,description,treatment,classification&language=de', {
     method: 'POST',
     headers: {
       'Api-Key': PLANT_ID_KEY,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      images: ['data:image/jpeg;base64,' + imageData],
-      similar_images: false
+      images: ['data:image/jpeg;base64,' + imageData]
     })
   });
   if (!res.ok) {
