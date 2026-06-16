@@ -19,6 +19,7 @@ html,body{height:100%;background:#F7F5F0;font-family:-apple-system,BlinkMacSyste
 .add-btn:active{background:#3a6347}
 .toast{position:relative;margin:10px 12px 0;background:#2C3E2D;color:#E8F0E9;border-radius:10px;padding:11px 16px;font-size:13px;font-weight:500;text-align:center;display:none}
 .toast.show{display:block}
+.toast.error{background:#C0392B}
 .urgent{background:#FFF3E0;border-bottom:1px solid #FFD9A0;padding:10px 20px;display:none;align-items:center;gap:8px;font-size:13px;color:#7A4F00}
 .urgent.show{display:flex}
 .sec-label{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#8A9B8E;padding:16px 20px 8px}
@@ -73,10 +74,28 @@ textarea{height:76px;resize:none}
 .photo-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .photo-prev{width:100%;height:110px;border-radius:11px;object-fit:cover;border:1.5px solid #E0EAE0;cursor:pointer;display:block}
 .mfoot{padding:12px 20px 4px;display:flex;gap:10px}
-.btn-save{flex:1;padding:14px;background:#2C3E2D;color:#E8F0E9;border:none;border-radius:13px;font-size:16px;font-weight:600;cursor:pointer}
+.btn-save{flex:1;padding:14px;background:#2C3E2D;color:#E8F0E9;border:none;border-radius:13px;font-size:16px;font-weight:600;cursor:pointer;position:relative}
 .btn-save:active{background:#1a2e1c}
+.btn-save:disabled{opacity:.6;cursor:not-allowed}
 .btn-cancel{padding:14px 18px;background:#F0F0F0;color:#666;border:none;border-radius:13px;font-size:16px;cursor:pointer}
 .loading-screen{display:flex;align-items:center;justify-content:center;height:200px;color:#8A9B8E;font-size:15px;gap:10px}
+
+/* Native-style delete confirmation sheet */
+.confirm-wrap{display:none;position:fixed;inset:0;z-index:200}
+.confirm-wrap.open{display:block}
+.confirm-back{position:absolute;inset:0;background:rgba(0,0,0,.4)}
+.confirm-sheet{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:0 8px calc(env(safe-area-inset-bottom,16px) + 8px)}
+.confirm-box{background:#fff;border-radius:14px;overflow:hidden;margin-bottom:8px}
+.confirm-title{padding:16px 20px 8px;text-align:center;font-size:13px;font-weight:600;color:#1A2E1C}
+.confirm-msg{padding:0 20px 16px;text-align:center;font-size:13px;color:#8A9B8E}
+.confirm-divider{height:.5px;background:#E0E0E0;margin:0 0}
+.confirm-del-btn{width:100%;padding:16px;background:none;border:none;font-size:17px;font-weight:600;color:#C0392B;cursor:pointer}
+.confirm-cancel-btn{width:100%;padding:17px;background:#fff;border:none;border-radius:14px;font-size:17px;font-weight:600;color:#4A7C59;cursor:pointer}
+
+/* Interval preset chips */
+.interval-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.ipreset{padding:6px 12px;border-radius:20px;border:1.5px solid #E0EAE0;background:#FAFCFA;font-size:12px;font-weight:600;color:#4A6E4C;cursor:pointer}
+.ipreset.active{background:#2C3E2D;border-color:#2C3E2D;color:#E8F0E9}
 </style>
 </head>
 <body>
@@ -85,7 +104,7 @@ textarea{height:76px;resize:none}
     <div class="topbar-inner">
       <div>
         <h1>🌿 Plantis</h1>
-        <p id="status-line">Verbinde…</p>
+        <p id="status-line">Lädt…</p>
       </div>
       <button class="add-btn" onclick="openModal()" aria-label="Pflanze hinzufügen">+</button>
     </div>
@@ -95,6 +114,7 @@ textarea{height:76px;resize:none}
   <div id="list-area"><div class="loading-screen">⏳ Lädt…</div></div>
 </div>
 
+<!-- Add / Edit Modal -->
 <div class="mwrap" id="mwrap">
   <div class="mback" onclick="closeModal()"></div>
   <div class="msheet">
@@ -106,16 +126,16 @@ textarea{height:76px;resize:none}
     <div class="mbody">
       <div class="flabel">Name *</div>
       <input type="text" id="f-name" placeholder="z.B. Monstera, Basilikum…">
-      <div class="row2">
-        <div>
-          <div class="flabel">Standort</div>
-          <input type="text" id="f-loc" placeholder="Wohnzimmer…">
-        </div>
-        <div>
-          <div class="flabel">Giess-Intervall (Tage)</div>
-          <input type="number" id="f-int" value="7" min="1" max="90">
-        </div>
+      <div class="flabel">Standort</div>
+      <input type="text" id="f-loc" placeholder="Wohnzimmer…">
+      <div class="flabel">Giess-Intervall</div>
+      <div class="interval-presets" id="interval-presets">
+        <button class="ipreset" data-days="2" onclick="setPreset(2)">Alle 2 Tage</button>
+        <button class="ipreset" data-days="7" onclick="setPreset(7)">Wöchentlich</button>
+        <button class="ipreset" data-days="14" onclick="setPreset(14)">2 Wochen</button>
+        <button class="ipreset" data-days="30" onclick="setPreset(30)">Monatlich</button>
       </div>
+      <input type="number" id="f-int" value="7" min="1" max="90" placeholder="Oder Tage eingeben…" oninput="syncPresets()">
       <div class="flabel">Zuletzt gegossen</div>
       <input type="date" id="f-watered">
       <div class="flabel">Notizen</div>
@@ -131,8 +151,22 @@ textarea{height:76px;resize:none}
     </div>
     <div class="mfoot">
       <button class="btn-cancel" onclick="closeModal()">Abbrechen</button>
-      <button class="btn-save" onclick="savePlant()">Speichern</button>
+      <button class="btn-save" id="btn-save" onclick="savePlant()">Speichern</button>
     </div>
+  </div>
+</div>
+
+<!-- Native-style Delete Confirmation -->
+<div class="confirm-wrap" id="confirm-wrap">
+  <div class="confirm-back" onclick="closeConfirm()"></div>
+  <div class="confirm-sheet">
+    <div class="confirm-box">
+      <div class="confirm-title" id="confirm-title">Pflanze löschen?</div>
+      <div class="confirm-msg">Diese Aktion kann nicht rückgängig gemacht werden.</div>
+      <div class="confirm-divider"></div>
+      <button class="confirm-del-btn" id="confirm-del-btn">Löschen</button>
+    </div>
+    <button class="confirm-cancel-btn" onclick="closeConfirm()">Abbrechen</button>
   </div>
 </div>
 
@@ -142,6 +176,14 @@ const PATH = '/pflanzen';
 let plants = [];
 let editId = null;
 let pendingPhoto = null;
+let confirmCallback = null;
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+function uuid() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+}
 
 function days(d) {
   if (!d) return 999;
@@ -157,57 +199,98 @@ function statusOf(p) {
 
 function wateredText(d) {
   const n = days(d);
-  if (n === 0)   return 'Heute gegossen';
-  if (n === 1)   return 'Gestern gegossen';
-  if (n >= 999)  return 'Noch nie gegossen';
+  if (n === 0)  return 'Heute gegossen';
+  if (n === 1)  return 'Gestern gegossen';
+  if (n >= 999) return 'Noch nie gegossen';
   return 'Vor ' + n + ' Tagen';
 }
 
-function toast(msg) {
+function toast(msg, isError = false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
+  t.classList.remove('error');
+  if (isError) t.classList.add('error');
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2400);
+  setTimeout(() => t.classList.remove('show'), isError ? 4000 : 2400);
 }
+
+// ─── Photo Compression ────────────────────────────────────────────────────────
+// Resizes to max 800px and compresses to JPEG 0.75 before storing.
+// Reduces typical iPhone photo from ~4MB base64 to ~60–120KB.
+
+function compressPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Foto konnte nicht gelesen werden.'));
+    reader.onload = ev => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Foto konnte nicht verarbeitet werden.'));
+      img.onload = () => {
+        const MAX = 800;
+        let {width: w, height: h} = img;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else       { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─── Firebase ────────────────────────────────────────────────────────────────
 
 async function fbGet() {
   const r = await fetch(FB + PATH + '.json');
+  if (!r.ok) throw new Error('HTTP ' + r.status);
   const d = await r.json();
   if (!d) return [];
   return Object.entries(d).map(([fbid, v]) => ({...v, fbid}));
 }
 
 async function fbSet(plant) {
-  if (plant.fbid) {
-    const {fbid, ...data} = plant;
-    await fetch(FB + PATH + '/' + fbid + '.json', {
+  const {fbid, ...data} = plant;
+  if (fbid) {
+    const r = await fetch(FB + PATH + '/' + fbid + '.json', {
       method: 'PUT',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(data)
     });
+    if (!r.ok) throw new Error('Speichern fehlgeschlagen (HTTP ' + r.status + ')');
   } else {
     const r = await fetch(FB + PATH + '.json', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(plant)
+      body: JSON.stringify(data)
     });
+    if (!r.ok) throw new Error('Speichern fehlgeschlagen (HTTP ' + r.status + ')');
     const d = await r.json();
     plant.fbid = d.name;
   }
 }
 
 async function fbDel(fbid) {
-  await fetch(FB + PATH + '/' + fbid + '.json', {method:'DELETE'});
+  const r = await fetch(FB + PATH + '/' + fbid + '.json', {method:'DELETE'});
+  if (!r.ok) throw new Error('Löschen fehlgeschlagen (HTTP ' + r.status + ')');
 }
+
+// ─── Load & Render ────────────────────────────────────────────────────────────
 
 async function load() {
   try {
     plants = await fbGet();
     render();
+    const n = plants.length;
     document.getElementById('status-line').textContent =
-      plants.length + (plants.length === 1 ? ' Pflanze' : ' Pflanzen') + ' · sync aktiv';
-  } catch {
+      n + (n === 1 ? ' Pflanze' : ' Pflanzen') + ' · sync aktiv';
+  } catch(e) {
     document.getElementById('status-line').textContent = 'Verbindungsfehler';
+    toast('⚠️ Firebase nicht erreichbar – prüfe deine Verbindung.', true);
   }
 }
 
@@ -227,7 +310,7 @@ function render() {
     area.innerHTML = `<div class="empty">
       <div class="empty-icon">🌱</div>
       <h2>Noch keine Pflanzen</h2>
-      <p>Tippe auf das + oben rechts,<br>um deine erste Pflanze hinzuzufügen.</p>
+      <p>Tippe auf das <strong>+</strong> oben rechts,<br>um deine erste Pflanze hinzuzufügen.</p>
     </div>`;
     return;
   }
@@ -259,7 +342,7 @@ function render() {
                 <span class="ibtn-emoji">✏️</span>
                 <span class="ibtn-label">Edit</span>
               </div>
-              <div class="ibtn ibtn-del" onclick="del('${p.id}')">
+              <div class="ibtn ibtn-del" onclick="confirmDel('${p.id}')">
                 <span class="ibtn-emoji">🗑️</span>
                 <span class="ibtn-label" style="color:#C0392B">Löschen</span>
               </div>
@@ -275,22 +358,67 @@ function render() {
   }).join('');
 }
 
+// ─── Actions ─────────────────────────────────────────────────────────────────
+
 async function water(id) {
   const p = plants.find(x => x.id === id);
   if (!p) return;
+  const prev = p.watered;
   p.watered = new Date().toISOString().split('T')[0];
-  await fbSet(p);
-  toast('💧 ' + p.name + ' gegossen!');
   render();
+  try {
+    await fbSet(p);
+    toast('💧 ' + p.name + ' gegossen!');
+  } catch(e) {
+    p.watered = prev; // rollback
+    render();
+    toast('⚠️ Konnte nicht gespeichert werden: ' + e.message, true);
+  }
+}
+
+// Native-style confirmation sheet instead of browser confirm()
+function confirmDel(id) {
+  const p = plants.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('confirm-title').textContent = '"' + p.name + '" löschen?';
+  document.getElementById('confirm-del-btn').onclick = () => del(id);
+  document.getElementById('confirm-wrap').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-wrap').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 async function del(id) {
-  if (!confirm('Pflanze wirklich löschen?')) return;
+  closeConfirm();
   const p = plants.find(x => x.id === id);
-  if (p?.fbid) await fbDel(p.fbid);
+  if (!p) return;
   plants = plants.filter(x => x.id !== id);
   render();
-  toast('🗑️ Pflanze gelöscht');
+  try {
+    if (p.fbid) await fbDel(p.fbid);
+    toast('🗑️ ' + p.name + ' gelöscht');
+  } catch(e) {
+    plants.push(p); // rollback
+    render();
+    toast('⚠️ Löschen fehlgeschlagen: ' + e.message, true);
+  }
+}
+
+// ─── Modal ───────────────────────────────────────────────────────────────────
+
+function setPreset(days) {
+  document.getElementById('f-int').value = days;
+  syncPresets();
+}
+
+function syncPresets() {
+  const val = parseInt(document.getElementById('f-int').value);
+  document.querySelectorAll('.ipreset').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.days) === val);
+  });
 }
 
 function openModal(id = null) {
@@ -302,6 +430,7 @@ function openModal(id = null) {
   document.getElementById('f-watered').value = p?.watered || new Date().toISOString().split('T')[0];
   document.getElementById('f-int').value     = p?.interval || 7;
   document.getElementById('f-notes').value   = p?.notes || '';
+  syncPresets();
   const pa = document.getElementById('photo-area');
   if (p?.photo) {
     pa.innerHTML = `<img class="photo-prev" src="${p.photo}" onclick="document.getElementById('rep').click()" alt="Pflanzenfoto">
@@ -319,52 +448,72 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 
-function handlePhoto(e) {
-  const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = ev => {
-    pendingPhoto = ev.target.result;
-    document.getElementById('photo-area').innerHTML =
-      `<img class="photo-prev" src="${pendingPhoto}" alt="Neues Foto">
-       <div style="font-size:12px;color:#8A9B8E;text-align:center;margin-top:6px">Tippen zum Ersetzen</div>`;
-  };
-  r.readAsDataURL(f);
+async function handlePhoto(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  const pa = document.getElementById('photo-area');
+  pa.innerHTML = `<div class="photo-zone" style="opacity:.5"><span style="font-size:26px">⏳</span><span>Komprimiere…</span></div>`;
+  try {
+    pendingPhoto = await compressPhoto(f);
+    pa.innerHTML = `<img class="photo-prev" src="${pendingPhoto}" alt="Neues Foto">
+      <div style="font-size:12px;color:#8A9B8E;text-align:center;margin-top:6px">Tippen zum Ersetzen</div>
+      <input type="file" id="rep2" accept="image/*" style="display:none" onchange="handlePhoto(event)">`;
+    pa.querySelector('img').onclick = () => document.getElementById('rep2').click();
+  } catch(err) {
+    pendingPhoto = null;
+    pa.innerHTML = `<div class="photo-zone"><span style="font-size:26px">📷</span><span>Foto hinzufügen</span><input type="file" accept="image/*" onchange="handlePhoto(event)"></div>`;
+    toast('⚠️ ' + err.message, true);
+  }
 }
 
 async function savePlant() {
   const name = document.getElementById('f-name').value.trim();
-  if (!name) { alert('Bitte einen Namen eingeben.'); return; }
-  if (editId) {
-    const p = plants.find(x => x.id === editId);
-    p.name     = name;
-    p.loc      = document.getElementById('f-loc').value.trim();
-    p.watered  = document.getElementById('f-watered').value;
-    p.interval = parseInt(document.getElementById('f-int').value) || 7;
-    p.notes    = document.getElementById('f-notes').value.trim();
-    if (pendingPhoto) p.photo = pendingPhoto;
-    await fbSet(p);
-    toast('✅ ' + name + ' gespeichert!');
-  } else {
-    const p = {
-      id: Date.now() + '',
-      name,
-      loc:      document.getElementById('f-loc').value.trim(),
-      watered:  document.getElementById('f-watered').value,
-      interval: parseInt(document.getElementById('f-int').value) || 7,
-      notes:    document.getElementById('f-notes').value.trim(),
-      photo:    pendingPhoto || null,
-      created:  new Date().toISOString()
-    };
-    plants.push(p);
-    await fbSet(p);
-    toast('🌱 ' + name + ' hinzugefügt!');
+  if (!name) { toast('⚠️ Bitte einen Namen eingeben.', true); return; }
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.textContent = 'Speichert…';
+
+  try {
+    if (editId) {
+      const p = plants.find(x => x.id === editId);
+      p.name     = name;
+      p.loc      = document.getElementById('f-loc').value.trim();
+      p.watered  = document.getElementById('f-watered').value;
+      p.interval = parseInt(document.getElementById('f-int').value) || 7;
+      p.notes    = document.getElementById('f-notes').value.trim();
+      if (pendingPhoto) p.photo = pendingPhoto;
+      await fbSet(p);
+      toast('✅ ' + name + ' gespeichert!');
+    } else {
+      const p = {
+        id:       uuid(),
+        name,
+        loc:      document.getElementById('f-loc').value.trim(),
+        watered:  document.getElementById('f-watered').value,
+        interval: parseInt(document.getElementById('f-int').value) || 7,
+        notes:    document.getElementById('f-notes').value.trim(),
+        photo:    pendingPhoto || null,
+        created:  new Date().toISOString()
+      };
+      plants.push(p);
+      await fbSet(p);
+      toast('🌱 ' + name + ' hinzugefügt!');
+    }
+    render();
+    closeModal();
+  } catch(e) {
+    toast('⚠️ Fehler beim Speichern: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Speichern';
   }
-  render();
-  closeModal();
 }
 
+// ─── Init ─────────────────────────────────────────────────────────────────────
+// Kein setInterval – lädt nur einmal beim Start.
+// Manuell neu laden: Seite neu laden oder Pull-to-Refresh (iOS Safari).
 load();
-setInterval(load, 20000);
 </script>
 </body>
 </html>
