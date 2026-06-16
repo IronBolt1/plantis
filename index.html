@@ -691,7 +691,7 @@ async function handlePhoto(e) {
       <input type="file" id="rep2" accept="image/*" style="display:none" onchange="handlePhoto(event)">`;
     pa.querySelector('img').onclick = () => document.getElementById('rep2').click();
     // Auto-identify
-    if (PLANT_ID_KEY && PLANT_ID_KEY !== 'DEIN_PLANT_ID_KEY_HIER') {
+    if (PLANT_ID_KEY && PLANT_ID_KEY !== 'gQQkYlXxlpSYuswh5sd9yiTW0s1wzoDE89T2fDA6FkKzHClPe6') {
       aiBox.innerHTML = `<div class="ai-result-title">🔍 Pflanze wird erkannt…</div>`;
       aiBox.classList.add('show');
       const data = await identifyPlant(pendingPhoto);
