@@ -81,6 +81,22 @@ textarea{height:76px;resize:none}
 .btn-save:disabled{opacity:.6;cursor:not-allowed}
 .btn-cancel{padding:14px 18px;background:#F0F0F0;color:#666;border:none;border-radius:13px;font-size:16px;cursor:pointer}
 
+
+/* Plant search */
+.plant-search-wrap{position:relative;margin-bottom:4px}
+.plant-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #4A7C59;border-radius:11px;max-height:220px;overflow-y:auto;z-index:50;display:none;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.plant-dropdown.open{display:block}
+.plant-option{padding:11px 14px;font-size:14px;color:#1A2E1C;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:.5px solid #F0F0F0}
+.plant-option:last-child{border-bottom:none}
+.plant-option:active{background:#F0F7F1}
+.plant-option-name{font-weight:600}
+.plant-option-sub{font-size:12px;color:#8A9B8E;margin-top:1px}
+.plant-info-box{background:#F0F7F1;border:1.5px solid #B8D8BB;border-radius:12px;padding:12px 14px;display:none;margin-bottom:4px}
+.plant-info-box.show{display:block}
+.plant-info-title{font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:6px}
+.plant-info-row{font-size:12px;color:#3A4E3C;margin:3px 0;display:flex;gap:6px}
+.plant-info-row span:first-child{font-weight:600;min-width:80px}
+
 /* Interval presets */
 .interval-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .ipreset{padding:6px 12px;border-radius:20px;border:1.5px solid #E0EAE0;background:#FAFCFA;font-size:12px;font-weight:600;color:#4A6E4C;cursor:pointer}
@@ -174,19 +190,24 @@ textarea{height:76px;resize:none}
       <button class="mclose" onclick="closeModal()">✕</button>
     </div>
     <div class="mbody">
+      <div class="flabel">Pflanze wählen</div>
+      <div class="plant-search-wrap">
+        <input type="text" id="f-search" placeholder="🔍 Suchen oder selbst eingeben…" oninput="filterPlants(this.value)" autocomplete="off" onblur="hideDropdown()">
+        <div id="plant-dropdown" class="plant-dropdown"></div>
+      </div>
+      <div id="plant-info-box" class="plant-info-box"></div>
+
+      <div class="flabel">Name *</div>
+      <input type="text" id="f-name" placeholder="z.B. Monstera, Basilikum…">
+
       <div class="flabel">Foto</div>
       <div id="photo-area">
         <div class="photo-zone">
           <span style="font-size:26px">📷</span>
-          <span>Foto hinzufügen · KI erkennt die Pflanze</span>
+          <span>Foto hinzufügen (optional)</span>
           <input type="file" accept="image/*" onchange="handlePhoto(event)">
         </div>
       </div>
-      <div id="ai-identify-result" class="ai-result"></div>
-      <div id="ai-disease-result" class="ai-result ai-disease"></div>
-
-      <div class="flabel">Name *</div>
-      <input type="text" id="f-name" placeholder="z.B. Monstera, Basilikum…">
       <div class="flabel">Standort</div>
       <input type="text" id="f-loc" placeholder="Wohnzimmer…">
       <div class="flabel">Giess-Intervall</div>
@@ -242,9 +263,9 @@ textarea{height:76px;resize:none}
 
 <script>
 // ─── CONFIG – trage deine Keys hier ein ──────────────────────────────────────
-const PLANT_ID_KEY    = 'gQQkYlXxlpSYuswh5sd9yiTW0s1wzoDE89T2fDA6FkKzHClPe6';         // plant.id API Key
-const VAPID_PUBLIC    = 'BDUtBSKOE4XTGtsmFAItvWrHjgScaBPsQK_3qnG29DZcdSEjPR8ep6wU12N2dqRzNxO7X_WQUwbyAKIWCHembkk';     // von vapidkeys.com
-const WORKER_URL      = 'plantis-push.vorkochen.workers.dev'; // z.B. https://plantis-push.deinname.workers.dev
+const PLANT_ID_KEY    = 'DEIN_PLANT_ID_KEY_HIER';         // plant.id API Key
+const VAPID_PUBLIC    = 'DEIN_VAPID_PUBLIC_KEY_HIER';     // von vapidkeys.com
+const WORKER_URL      = 'DEINE_CLOUDFLARE_WORKER_URL_HIER'; // z.B. https://plantis-push.deinname.workers.dev
 const FB              = 'https://plantis-5934a-default-rtdb.europe-west1.firebasedatabase.app';
 const PATH            = '/pflanzen';
 
@@ -311,6 +332,101 @@ function compressPhoto(file, maxPx = 800, quality = 0.75) {
   });
 }
 
+// ─── Pflanzendatenbank ───────────────────────────────────────────────────────
+const PLANTS_DB = [
+  {name:'Monstera',       sci:'Monstera deliciosa',    days:7,  light:'Helles Indirektlicht',  notes:'Große Blätter abwischen. Mag hohe Luftfeuchtigkeit.'},
+  {name:'Pothos',         sci:'Epipremnum aureum',     days:10, light:'Wenig bis mittel',       notes:'Sehr pflegeleicht. Hängt gerne.'},
+  {name:'Geldbaum',       sci:'Crassula ovata',        days:14, light:'Viel Sonne',             notes:'Sukkulent – lieber zu wenig als zu viel giessen.'},
+  {name:'Aloe Vera',      sci:'Aloe vera',             days:14, light:'Viel Sonne',             notes:'Sukkulent. Erde zwischen dem Giessen komplett trocknen lassen.'},
+  {name:'Ficus',          sci:'Ficus benjamina',       days:7,  light:'Helles Indirektlicht',  notes:'Mag keine Zugluft. Standort nicht wechseln.'},
+  {name:'Yucca',          sci:'Yucca elephantipes',    days:14, light:'Viel Sonne',             notes:'Robust und trockenheitstolerant.'},
+  {name:'Zamioculcas',    sci:'Zamioculcas zamiifolia',days:14, light:'Wenig bis mittel',       notes:'Extrem pflegeleicht. Verträgt Dunkelheit.'},
+  {name:'Orchidee',       sci:'Phalaenopsis sp.',      days:7,  light:'Helles Indirektlicht',  notes:'Staunässe vermeiden. Nur Wurzeln giessen.'},
+  {name:'Dracaena',       sci:'Dracaena marginata',    days:10, light:'Mittel',                 notes:'Kein Kalkwasser. Braune Spitzen = zu trocken.'},
+  {name:'Bogenhanf',      sci:'Sansevieria trifasciata',days:21,light:'Wenig bis viel',        notes:'Sehr robust. Fast unzerstörbar.'},
+  {name:'Philodendron',   sci:'Philodendron sp.',      days:7,  light:'Helles Indirektlicht',  notes:'Mag Feuchtigkeit. Blätter wischen.'},
+  {name:'Efeutute',       sci:'Scindapsus pictus',     days:10, light:'Wenig bis mittel',       notes:'Hänge- oder Kletterpflanze.'},
+  {name:'Kaktus',         sci:'Cactaceae sp.',         days:30, light:'Volle Sonne',            notes:'Im Winter kaum giessen.'},
+  {name:'Echeveria',      sci:'Echeveria sp.',         days:14, light:'Viel Sonne',             notes:'Sukkulent. Keine Nässe in der Rosette.'},
+  {name:'Palmlilie',      sci:'Yucca sp.',             days:14, light:'Viel Sonne',             notes:'Trocken halten im Winter.'},
+  {name:'Areca Palme',    sci:'Dypsis lutescens',      days:5,  light:'Helles Indirektlicht',  notes:'Luftbefeuchter in der Nähe empfohlen.'},
+  {name:'Birkenfeige',    sci:'Ficus lyrata',          days:7,  light:'Helles Licht',           notes:'Blätter abwischen. Kein Luftzug.'},
+  {name:'Einblatt',       sci:'Spathiphyllum sp.',     days:5,  light:'Wenig bis mittel',       notes:'Hängende Blätter = Durst. Mag Feuchtigkeit.'},
+  {name:'Zimmerlinde',    sci:'Sparrmannia africana',  days:5,  light:'Helles Licht',           notes:'Viel Wasser im Sommer.'},
+  {name:'Schefflera',     sci:'Schefflera arboricola', days:7,  light:'Helles Indirektlicht',  notes:'Mag keine Staunässe.'},
+  {name:'Calathea',       sci:'Calathea sp.',          days:5,  light:'Indirektes Licht',       notes:'Kein Kalkwasser. Hohe Luftfeuchtigkeit.'},
+  {name:'Anthurium',      sci:'Anthurium andraeanum',  days:7,  light:'Helles Indirektlicht',  notes:'Staunässe vermeiden. Wischte Blätter.'},
+  {name:'Alocasia',       sci:'Alocasia sp.',          days:5,  light:'Helles Indirektlicht',  notes:'Mag Wärme und Feuchtigkeit.'},
+  {name:'Dieffenbachie',  sci:'Dieffenbachia sp.',     days:7,  light:'Mittel',                 notes:'Giftig. Saft nicht in Augen/Mund.'},
+  {name:'Tradeskantie',   sci:'Tradescantia sp.',      days:5,  light:'Helles Licht',           notes:'Schnell wachsend. Regelmässig schneiden.'},
+  {name:'Bromelien',      sci:'Bromeliaceae sp.',      days:7,  light:'Helles Indirektlicht',  notes:'Wasser in die Blattrosette giessen.'},
+  {name:'Zimmerbambus',   sci:'Chamaedorea seifrizii', days:5,  light:'Wenig bis mittel',       notes:'Gut für Badezimmer.'},
+  {name:'Bonsai',         sci:'Variabel',              days:2,  light:'Variabel',               notes:'Täglich kontrollieren. Nie austrocknen lassen.'},
+  {name:'Sukkulente',     sci:'Variabel',              days:14, light:'Viel Sonne',             notes:'Wenig giessen. Sehr gut drainiertes Substrat.'},
+  {name:'Klimme',         sci:'Hedera helix',          days:7,  light:'Wenig bis mittel',       notes:'Mag kühlere Temperaturen.'},
+  {name:'Geranium',       sci:'Pelargonium sp.',       days:3,  light:'Viel Sonne',             notes:'Im Sommer täglich kontrollieren.'},
+  {name:'Basilikum',      sci:'Ocimum basilicum',      days:2,  light:'Volle Sonne',            notes:'Regelmässig ernten für buschigen Wuchs.'},
+  {name:'Rosmarin',       sci:'Salvia rosmarinus',     days:5,  light:'Volle Sonne',            notes:'Kräuter mögen es nicht zu nass.'},
+  {name:'Minze',          sci:'Mentha sp.',            days:3,  light:'Helles Licht',           notes:'Wächst schnell. Regelmässig giessen.'},
+  {name:'Lavendel',       sci:'Lavandula sp.',         days:7,  light:'Volle Sonne',            notes:'Gut drainiert. Mag Trockenheit.'},
+  {name:'Thymian',        sci:'Thymus vulgaris',       days:7,  light:'Volle Sonne',            notes:'Trockenheitsresistent.'},
+  {name:'Schnittlauch',   sci:'Allium schoenoprasum',  days:3,  light:'Helles Licht',           notes:'Gleichmässig feucht halten.'},
+  {name:'Farn',           sci:'Polypodiopsida sp.',    days:3,  light:'Indirektes Licht',       notes:'Hohe Luftfeuchtigkeit. Nie austrocknen.'},
+  {name:'Avocado',        sci:'Persea americana',      days:5,  light:'Viel Sonne',             notes:'Selbst gezogen aus Kern.'},
+  {name:'Zitrone',        sci:'Citrus limon',          days:5,  light:'Volle Sonne',            notes:'Viel Licht. Im Sommer raus.'},
+  {name:'Olive',          sci:'Olea europaea',         days:7,  light:'Volle Sonne',            notes:'Trockenheitstolerant. Im Sommer raus.'},
+];
+
+let dropdownVisible = false;
+let filteredPlants = [];
+
+function filterPlants(query) {
+  const q = (query || '').trim().toLowerCase();
+  const dropdown = document.getElementById('plant-dropdown');
+  if (!q) { dropdown.classList.remove('open'); return; }
+  filteredPlants = PLANTS_DB.filter(p =>
+    p.name.toLowerCase().includes(q) || p.sci.toLowerCase().includes(q)
+  ).slice(0, 8);
+  if (!filteredPlants.length) {
+    dropdown.classList.remove('open');
+    return;
+  }
+  dropdown.innerHTML = filteredPlants.map((p, i) =>
+    `<div class="plant-option" onmousedown="selectPlant(${i})">
+      <span style="font-size:20px">🌿</span>
+      <div>
+        <div class="plant-option-name">${p.name}</div>
+        <div class="plant-option-sub">${p.sci} · alle ${p.days} Tage</div>
+      </div>
+    </div>`
+  ).join('');
+  dropdown.classList.add('open');
+}
+
+function selectPlant(idx) {
+  const p = filteredPlants[idx];
+  if (!p) return;
+  document.getElementById('f-search').value = p.name;
+  document.getElementById('f-name').value = p.name;
+  document.getElementById('f-int').value = p.days;
+  document.getElementById('f-notes').value = document.getElementById('f-notes').value || p.notes;
+  syncPresets();
+  document.getElementById('plant-dropdown').classList.remove('open');
+  // Show info box
+  const box = document.getElementById('plant-info-box');
+  box.innerHTML = `
+    <div class="plant-info-title">🌿 ${p.name} <span style="font-weight:400;color:#5A8A6A;font-size:11px">${p.sci}</span></div>
+    <div class="plant-info-row"><span>💧 Giessen</span><span>Alle ${p.days} Tage</span></div>
+    <div class="plant-info-row"><span>☀️ Licht</span><span>${p.light}</span></div>
+    <div class="plant-info-row"><span>📝 Tipp</span><span>${p.notes}</span></div>
+  `;
+  box.classList.add('show');
+}
+
+function hideDropdown() {
+  setTimeout(() => document.getElementById('plant-dropdown').classList.remove('open'), 150);
+}
+
 // ─── Plant.id API ─────────────────────────────────────────────────────────────
 async function identifyPlant(base64img) {
   const imageData = base64img.includes(',') ? base64img.split(',')[1] : base64img;
@@ -350,87 +466,6 @@ async function checkDisease(base64img) {
   return res.json();
 }
 
-function showAiIdentifyResult(data) {
-  const box = document.getElementById('ai-identify-result');
-  const diseaseBox = document.getElementById('ai-disease-result');
-
-  // v3 API: result.classification.suggestions or result.suggestions
-  const suggestions = data?.result?.classification?.suggestions
-    || data?.suggestions
-    || [];
-
-  if (!suggestions.length) {
-    box.innerHTML = '<div class="ai-result-title">❓ Pflanze nicht erkannt</div>';
-    box.classList.add('show');
-    return;
-  }
-
-  const top = suggestions[0];
-  const name = top.name || '';
-  const common = top.details?.common_names?.[0] || top.plant_name || '';
-  const desc = top.details?.description?.value || top.details?.description || '';
-  const watering = top.details?.best_watering || top.details?.watering?.max
-    || top.details?.watering || '';
-  const light = top.details?.best_light_condition || top.details?.sunlight?.[0]
-    || top.details?.sunlight || '';
-  const prob = Math.round((top.probability || top.score || 0) * 100);
-
-  // Try to map watering text to interval days
-  let suggestedDays = 7;
-  const wl = watering.toLowerCase();
-  if (wl.includes('daily') || wl.includes('täglich')) suggestedDays = 1;
-  else if (wl.includes('every 2') || wl.includes('alle 2')) suggestedDays = 2;
-  else if (wl.includes('every 3')) suggestedDays = 3;
-  else if (wl.includes('week') || wl.includes('woche')) suggestedDays = 7;
-  else if (wl.includes('two week') || wl.includes('14')) suggestedDays = 14;
-  else if (wl.includes('month') || wl.includes('monat')) suggestedDays = 30;
-
-  lastAiData = { name: common || name, days: suggestedDays, notes: desc ? desc.slice(0,120) : '' };
-
-  box.innerHTML = `
-    <div class="ai-result-title">🌿 ${common || name} · ${prob}% sicher</div>
-    ${name !== common ? `<div class="ai-result-row"><span>Wissenschaftl.</span><span>${name}</span></div>` : ''}
-    ${watering ? `<div class="ai-result-row"><span>💧 Giessen</span><span>${watering}</span></div>` : ''}
-    ${light ? `<div class="ai-result-row"><span>☀️ Licht</span><span>${light}</span></div>` : ''}
-    ${desc ? `<div class="ai-result-row" style="flex-direction:column"><span>Info</span><span style="color:#555;margin-top:2px">${desc.slice(0,120)}…</span></div>` : ''}
-    <button class="ai-apply" onclick="applyAiData()">✓ Daten übernehmen</button>
-  `;
-  box.classList.add('show');
-  diseaseBox.classList.remove('show');
-
-  // Check for disease at the same time
-  if (pendingPhoto) {
-    checkDisease(pendingPhoto).then(dr => {
-      const isHealthy = dr?.result?.is_healthy?.binary ?? dr?.health_assessment?.is_healthy;
-      if (isHealthy === false) {
-        const dis = dr?.result?.disease?.suggestions?.[0]
-          || dr?.health_assessment?.diseases?.[0];
-        const disName = dis?.name || dis?.disease_details?.local_name || 'Unbekannte Krankheit';
-        const treatment = dis?.details?.treatment?.biological?.[0]
-          || dis?.details?.treatment?.chemical?.[0]
-          || dis?.disease_details?.treatment?.biological?.[0] || '';
-        diseaseBox.innerHTML = `
-          <div class="ai-result-title">⚠️ Mögliches Problem erkannt: ${disName}</div>
-          ${treatment ? `<div class="ai-result-row"><span>Behandlung</span><span>${treatment}</span></div>` : ''}
-        `;
-        diseaseBox.classList.add('show');
-      }
-    }).catch(() => {});
-  }
-}
-
-function applyAiData() {
-  if (!lastAiData) return;
-  if (lastAiData.name && !document.getElementById('f-name').value) {
-    document.getElementById('f-name').value = lastAiData.name;
-  }
-  document.getElementById('f-int').value = lastAiData.days;
-  syncPresets();
-  if (lastAiData.notes && !document.getElementById('f-notes').value) {
-    document.getElementById('f-notes').value = lastAiData.notes;
-  }
-  toast('✓ KI-Daten übernommen');
-}
 
 // ─── Disease Scan (for existing plant) ───────────────────────────────────────
 function openScan(plantId) {
@@ -659,8 +694,9 @@ function openModal(id = null) {
   document.getElementById('f-watered').value = p?.watered || new Date().toISOString().split('T')[0];
   document.getElementById('f-int').value     = p?.interval || 7;
   document.getElementById('f-notes').value   = p?.notes || '';
-  document.getElementById('ai-identify-result').classList.remove('show');
-  document.getElementById('ai-disease-result').classList.remove('show');
+  document.getElementById('plant-info-box').classList.remove('show');
+  document.getElementById('f-search').value = '';
+  document.getElementById('plant-dropdown').classList.remove('open');
   syncPresets();
   const pa = document.getElementById('photo-area');
   if (p?.photo) {
@@ -681,22 +717,14 @@ function closeModal() {
 async function handlePhoto(e) {
   const f = e.target.files[0]; if (!f) return;
   const pa = document.getElementById('photo-area');
-  const aiBox = document.getElementById('ai-identify-result');
-  pa.innerHTML = `<div class="photo-zone" style="opacity:.5"><span style="font-size:26px">⏳</span><span>Komprimiere & analysiere…</span></div>`;
-  aiBox.classList.remove('show');
+  pa.innerHTML = `<div class="photo-zone" style="opacity:.5"><span style="font-size:26px">⏳</span><span>Komprimiere…</span></div>`;
   try {
     pendingPhoto = await compressPhoto(f);
     pa.innerHTML = `<img class="photo-prev" src="${pendingPhoto}" alt="Neues Foto">
       <div style="font-size:12px;color:#8A9B8E;text-align:center;margin-top:6px">Tippen zum Ersetzen</div>
       <input type="file" id="rep2" accept="image/*" style="display:none" onchange="handlePhoto(event)">`;
     pa.querySelector('img').onclick = () => document.getElementById('rep2').click();
-    // Auto-identify
-    if (PLANT_ID_KEY && PLANT_ID_KEY !== 'gQQkYlXxlpSYuswh5sd9yiTW0s1wzoDE89T2fDA6FkKzHClPe6') {
-      aiBox.innerHTML = `<div class="ai-result-title">🔍 Pflanze wird erkannt…</div>`;
-      aiBox.classList.add('show');
-      const data = await identifyPlant(pendingPhoto);
-      showAiIdentifyResult(data);
-    }
+    // No auto-identify – plant selected via dropdown
   } catch(err) {
     pendingPhoto = null;
     pa.innerHTML = `<div class="photo-zone"><span style="font-size:26px">📷</span><span>Foto hinzufügen</span><input type="file" accept="image/*" onchange="handlePhoto(event)"></div>`;
